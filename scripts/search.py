@@ -25,7 +25,6 @@ FREE_PROVIDER_IDS = {35, 300, 192, 531, 538, 11, 339, 235}
 
 # Names of known AVOD/free-with-ads platforms that TMDB may misclassify under flatrate
 KNOWN_FREE_BY_NAME = {
-    "amazon prime video with ads",
     "youtube free",
     "pluto tv",
     "tubi tv",

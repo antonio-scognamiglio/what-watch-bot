@@ -338,16 +338,11 @@ Tipo: Serie TV
 🔵 TMDB: [X]/10
 
 📺 **Disponibile su:**
-[Il JSON `platforms` ora è una lista di oggetti `{name, url, tier}`. Per ogni piattaforma nella lista:
-
-- Se `url` non è null → scrivi come link markdown cliccabile: ✅ [nome](url)
-- Se `tier` è `subscription` → aggiungi emoji 💳 alla fine
-- Se `tier` è `free` → aggiungi emoji 🆓 alla fine
-- Es: ✅ [Netflix](https://...) 💳
-- Es: ✅ [YouTube](https://...) 🆓
-- Una piattaforma per riga
-- Se `url` è null → scrivi solo: ✅ nome]
-
+[Il JSON `platforms` e' una lista di oggetti `{name, url, tier}`. Per ogni piattaforma usa il NOME come testo del link:
+- abbonamento: 💳 [NomePiattaforma](url)
+- gratuita: 🆓 [NomePiattaforma](url)
+- Se url e' null: 💳 NomePiattaforma
+- Una riga per piattaforma]
 ▶️ [Guarda il trailer su YouTube](trailer_url)
 
 [SE NEL JSON `is_watched` E' TRUE ALLORA LA STRINGA DEV'ESSERE (Usa ESATTAMENTE l'underscore _ tra remove e id. VIETATO USARE ASTERISCHI *):]
