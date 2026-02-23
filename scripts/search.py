@@ -4,6 +4,7 @@ import json
 import argparse
 import requests
 import random
+from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import db_helper
 
@@ -18,6 +19,47 @@ REGION = os.getenv('REGION', 'IT')
 LANGUAGE = os.getenv('LANGUAGE', 'it-IT')
 
 ITEMS_PER_PAGE = 5
+
+# Provider IDs that are free or AVOD (no subscription needed)
+FREE_PROVIDER_IDS = {35, 300, 192, 531, 538, 11, 339, 235}
+
+# Names of known AVOD/free-with-ads platforms that TMDB may misclassify under flatrate
+KNOWN_FREE_BY_NAME = {
+    "amazon prime video with ads",
+    "youtube free",
+    "pluto tv",
+    "tubi tv",
+    "plex",
+    "rakuten tv",
+    "raiplay",
+    "mediaset infinity free",
+}
+
+# Search URL templates for platforms (text-based deeplinks)
+PLATFORM_SEARCH_URLS = {
+    "Netflix":               "https://www.netflix.com/search?q={title}",
+    "Amazon Prime Video":    "https://www.amazon.it/s?k={title}&i=instant-video",
+    "Disney+":               "https://www.disneyplus.com/search/{title}",
+    "Apple TV+":             "https://tv.apple.com/it/search?term={title}",
+    "NOW TV":                "https://www.nowtv.it/ricerca?q={title}",
+    "Rakuten TV":            "https://www.rakuten.tv/it/search?q={title}",
+    "Mediaset Infinity":     "https://mediasetinfinity.mediaset.it/search/keyword/{title}",
+    "RaiPlay":               "https://www.raiplay.it/ricerca.html#{title}",
+    "Pluto TV":              "https://pluto.tv/it/search?q={title}",
+    "Plex":                  "https://app.plex.tv/desktop/#!/search?query={title}",
+    "MUBI":                  "https://mubi.com/it/search?query={title}",
+    "YouTube":               "https://www.youtube.com/results?search_query={title}",
+    "YouTube Premium":       "https://www.youtube.com/results?search_query={title}",
+    "Paramount+":            "https://www.paramountplus.com/it/search/{title}/",
+    "Infinity Selection Amazon Channel": "https://www.amazon.it/s?k={title}&i=instant-video",
+    "Amazon Prime Video with Ads": "https://www.amazon.it/s?k={title}&i=instant-video",
+}
+
+def build_platform_url(name, title):
+    template = PLATFORM_SEARCH_URLS.get(name)
+    if template:
+        return template.replace("{title}", quote_plus(title))
+    return None
 
 def get_tmdb_total_pages(media_type, genres, providers, min_year=None):
     url = f"https://api.themoviedb.org/3/discover/{media_type}"
@@ -52,7 +94,7 @@ def search_tmdb(media_type, genres, providers, page=1, min_year=None):
         'watch_region': REGION,
         'with_watch_providers': '|'.join(map(str, providers)) if providers else '',
         'with_genres': '|'.join(map(str, genres)) if genres else '',
-        'sort_by': 'popularity.desc',  # Starts with popularity to get a good pool of results
+        'sort_by': 'popularity.desc',
         'page': page
     }
     
@@ -78,25 +120,28 @@ GENRE_MAPPING = {
 }
 
 def get_omdb_ratings(title, year=None):
+    if not OMDB_API_KEY:
+        return {}
     url = "http://www.omdbapi.com/"
     params = {'apikey': OMDB_API_KEY, 't': title}
     if year:
-        params['y'] = str(year)
-    response = requests.get(url, params=params)
-    ratings_dict = {'tomatometer': None, 'imdb': None, 'metacritic': None}
+        params['y'] = year
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        if response.status_code != 200:
+            return {}
+        data = response.json()
+        if data.get('Response') == 'False':
+            return {}
+    except Exception:
+        return {}
     
-    if response.status_code != 200:
-        return ratings_dict
-    data = response.json()
-    if data.get('Response') == 'False':
-        return ratings_dict
-        
+    ratings_dict = {}
     try:
         imdb_val = float(data.get('imdbRating', '0'))
         if imdb_val > 0: ratings_dict['imdb'] = imdb_val
     except ValueError:
         pass
-        
     try:
         meta_val = int(data.get('Metascore', '0'))
         if meta_val > 0: ratings_dict['metacritic'] = meta_val
@@ -125,27 +170,34 @@ def get_tmdb_details(item_id, media_type):
     return None
 
 
-
 def get_youtube_trailer(query):
     if not YOUTUBE_API_KEY:
         return None
     url = "https://www.googleapis.com/youtube/v3/search"
     params = {
+        'key': YOUTUBE_API_KEY,
+        'q': f"{query} trailer ufficiale",
         'part': 'snippet',
-        'q': query + " trailer italiano",
         'type': 'video',
-        'maxResults': 1,
-        'key': YOUTUBE_API_KEY
+        'maxResults': 1
     }
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        items = response.json().get('items', [])
-        if items:
-            video_id = items[0]['id']['videoId']
-            return f"https://www.youtube.com/watch?v={video_id}"
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        if response.status_code == 200:
+            items = response.json().get('items', [])
+            if items:
+                vid_id = items[0]['id']['videoId']
+                return f"https://www.youtube.com/watch?v={vid_id}"
+    except Exception:
+        pass
     return None
 
-def get_watch_providers(item_id, media_type):
+def get_watch_providers(item_id, media_type, title):
+    """
+    Returns a list of platform objects:
+    { name, url, tier }
+    where tier is 'subscription' (flatrate) or 'free' (free + ads).
+    """
     url = f"https://api.themoviedb.org/3/{media_type}/{item_id}/watch/providers"
     params = {'api_key': TMDB_API_KEY}
     try:
@@ -153,9 +205,35 @@ def get_watch_providers(item_id, media_type):
         if response.status_code == 200:
             data = response.json().get('results', {})
             it_data = data.get(REGION, {})
-            flatrate = it_data.get('flatrate', [])
-            return [p['provider_name'] for p in flatrate]
-    except:
+            platforms = []
+            seen = set()
+
+            # Subscription (flatrate) — but some AVOD platforms land here too
+            for p in it_data.get('flatrate', []):
+                name = p['provider_name']
+                if name not in seen:
+                    seen.add(name)
+                    tier = 'free' if name.lower() in KNOWN_FREE_BY_NAME else 'subscription'
+                    platforms.append({
+                        'name': name,
+                        'url': build_platform_url(name, title),
+                        'tier': tier
+                    })
+
+            # Free (free + ads → treated as same "free" category)
+            for tier_key in ('free', 'ads'):
+                for p in it_data.get(tier_key, []):
+                    name = p['provider_name']
+                    if name not in seen:
+                        seen.add(name)
+                        platforms.append({
+                            'name': name,
+                            'url': build_platform_url(name, title),
+                            'tier': 'free'
+                        })
+
+            return platforms
+    except Exception:
         pass
     return []
 
@@ -178,9 +256,6 @@ def main():
     # Establish Random Generator
     rng = random.Random(args.seed if args.seed is not None else 42)
     
-    # We will fetch movies and tv shows from TMDB iteratively until we have 5 valid items
-    valid_results = []
-    
     # Pre-fetch total pages to set our deep shuffle bounds
     movie_pages = get_tmdb_total_pages('movie', genres, platforms, min_year) if args.type in ('movie', 'both') else 0
     tv_pages = get_tmdb_total_pages('tv', genres, platforms, min_year) if args.type in ('tv', 'both') else 0
@@ -202,6 +277,8 @@ def main():
     # Track how many TMDB pages we tried to avoid infinite loops if constraints are too tight
     attempts = 0
     MAX_ATTEMPTS = 150
+    
+    valid_results = []
     
     while len(valid_results) < target_count and attempts < MAX_ATTEMPTS and (movie_page_list or tv_page_list):
         attempts += 1
@@ -272,20 +349,10 @@ def main():
         year = release_date[:4] if release_date else ""
         
         trailer = get_youtube_trailer(f"{title} {year}")
-        platforms_found = get_watch_providers(item.get('id'), item.get('media_type'))
         
-        poster_path = item.get('poster_path')
-        poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None
+        item_type = item.get('media_type', 'movie')
+        item_id = item.get('id')
         
-        # Determine genres and which ones matched
-        item_genres = []
-        matched_genres = []
-        for gid in item.get('genre_ids', []):
-            gname = GENRE_MAPPING.get(gid, str(gid))
-            item_genres.append(gname)
-            if gid in genres:
-                matched_genres.append(gname)
-                
         # Fetch detailed credits and overview
         details = get_tmdb_details(item.get('id'), item.get('media_type')) or {}
         overview = details.get('overview') or item.get('overview') or ""
@@ -293,38 +360,47 @@ def main():
         credits_data = details.get('credits', {})
         cast = [c['name'] for c in credits_data.get('cast', [])[:3]]
         
-        directors = []
-        if item.get('media_type') == 'movie':
-            directors = [c['name'] for c in credits_data.get('crew', []) if c.get('job') == 'Director']
-        else: # tv
-            directors = [c['name'] for c in details.get('created_by', [])]
-            
+        if item_type == 'movie':
+            directors = [c['name'] for c in credits_data.get('crew', []) if c.get('job') == 'Director'][:2]
+        else:
+            directors = [c['name'] for c in credits_data.get('crew', []) if c.get('department') == 'Directing'][:2]
+
+        genre_ids = item.get('genre_ids', [])
+        user_genre_ids = prefs.get('genres', [])
+        all_genre_names = [GENRE_MAPPING.get(gid, '') for gid in genre_ids if gid in GENRE_MAPPING]
+        matched_genre_names = [GENRE_MAPPING.get(gid, '') for gid in genre_ids if gid in user_genre_ids and gid in GENRE_MAPPING]
+        
+        poster_path = item.get('poster_path') or details.get('poster_path')
+        poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None
+        
+        platform_objects = get_watch_providers(item_id, item_type, title)
+        
+        omdb_ratings = item.get('omdb_ratings', {})
+        tmdb_rating = item.get('tmdb_rating', 0)
+        
         final_output.append({
-            'id': item.get('id'),
-            'type': item.get('media_type'),
+            'id': item_id,
+            'type': item_type,
             'title': title,
             'year': year,
             'overview': overview,
-            'genres': item_genres,
-            'matched_genres': matched_genres,
+            'genres': [g for g in all_genre_names if g],
+            'matched_genres': [g for g in matched_genre_names if g],
             'directors': directors,
             'cast': cast,
             'ratings': {
-                'tomatometer': item.get('omdb_ratings', {}).get('tomatometer'),
-                'imdb': item.get('omdb_ratings', {}).get('imdb'),
-                'metacritic': item.get('omdb_ratings', {}).get('metacritic'),
-                'tmdb': item.get('tmdb_rating')
+                'tomatometer': omdb_ratings.get('tomatometer'),
+                'imdb': omdb_ratings.get('imdb'),
+                'metacritic': omdb_ratings.get('metacritic'),
+                'tmdb': tmdb_rating
             },
-            'platforms': platforms_found,
+            'platforms': platform_objects,
             'trailer_url': trailer,
             'poster_url': poster_url,
             'is_watched': item.get('is_watched', False)
         })
-        
-    print(json.dumps(final_output, indent=2, ensure_ascii=False))
+    
+    print(json.dumps(final_output, ensure_ascii=False, indent=2))
 
 if __name__ == "__main__":
-    if not TMDB_API_KEY or not OMDB_API_KEY:
-        print(json.dumps({"error": "TMDB_API_KEY and OMDB_API_KEY must be set in .env"}))
-        sys.exit(1)
     main()

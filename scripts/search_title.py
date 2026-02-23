@@ -60,7 +60,7 @@ def main():
         omdb_ratings = get_omdb_ratings(title, year)
         
         trailer = get_youtube_trailer(f"{title} {year}")
-        platforms_found = get_watch_providers(item.get('id'), item_type)
+        platforms_found = get_watch_providers(item.get('id'), item_type, title)
         
         poster_path = item.get('poster_path')
         poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None

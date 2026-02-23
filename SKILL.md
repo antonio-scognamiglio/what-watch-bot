@@ -205,12 +205,16 @@ Usa ✅ per quelle già attive, ◻️ per le altre:
 ◻️  Apple TV+
 ◻️  NOW TV / Sky
 ◻️  Paramount+
-◻️  Rai Play
-◻️  Mediaset Infinity
-◻️  TIMvision
-◻️  Sky Go
+◻️  YouTube Premium
 ◻️  MUBI
-◻️  Infinity+
+
+🆓 GRATUITE (con o senza pubblicità — nessun abbonamento richiesto):
+◻️  RaiPlay
+◻️  Mediaset Infinity
+◻️  YouTube (gratuito)
+◻️  Rakuten TV
+◻️  Pluto TV
+◻️  Plex
 ```
 
 _(Esempio con Netflix già attivo — sostituisci con quelle realmente nelle preferenze correnti)_
@@ -227,20 +231,30 @@ Rispondi mostrando la lista aggiornata con i nuovi ✅/◻️.
 
 **🔴 LOOKUP INTERNA — MAI MOSTRARE:**
 
-| Piattaforma        | ID interno |
-| ------------------ | ---------- |
-| Netflix            | 8          |
-| Amazon Prime Video | 119        |
-| Disney+            | 337        |
-| Apple TV+          | 350        |
-| NOW TV / Sky       | 39         |
-| Paramount+         | 531        |
-| Rai Play           | 613        |
-| Mediaset Infinity  | 359        |
-| TIMvision          | 109        |
-| Sky Go             | 29         |
-| MUBI               | 11         |
-| Infinity+          | 110        |
+💳 CON ABBONAMENTO:
+| Piattaforma | ID |
+|---|---|
+| Netflix | 8 |
+| Amazon Prime Video | 119 |
+| Disney+ | 337 |
+| Apple TV+ | 350 |
+| NOW TV / Sky | 39 |
+| Paramount+ | 531 |
+| YouTube Premium | 188 |
+| MUBI | 11 |
+| TIMvision | 109 |
+| Sky Go | 29 |
+| Infinity+ | 110 |
+
+🆓 GRATUITE (tier `free` o `ads` TMDB):
+| Piattaforma | ID |
+|---|---|
+| RaiPlay | 613 |
+| Mediaset Infinity (free) | 359 |
+| YouTube (gratuito) | 192 |
+| Rakuten TV | 35 |
+| Pluto TV | 300 |
+| Plex | 538 |
 
 ### PASSO 4 — Mostra o Nascondi titoli già visti
 
@@ -324,14 +338,22 @@ Tipo: Serie TV
 🔵 TMDB: [X]/10
 
 📺 **Disponibile su:**
-[Elenco piattaforme presenti nel JSON, UNA PER RIGA preceduta dall'emoji ✅ es. ✅ Netflix]
+[Il JSON `platforms` ora è una lista di oggetti `{name, url, tier}`. Per ogni piattaforma nella lista:
+
+- Se `url` non è null → scrivi come link markdown cliccabile: ✅ [nome](url)
+- Se `tier` è `subscription` → aggiungi emoji 💳 alla fine
+- Se `tier` è `free` → aggiungi emoji 🆓 alla fine
+- Es: ✅ [Netflix](https://...) 💳
+- Es: ✅ [YouTube](https://...) 🆓
+- Una piattaforma per riga
+- Se `url` è null → scrivi solo: ✅ nome]
 
 ▶️ [Guarda il trailer su YouTube](trailer_url)
 
 [SE NEL JSON `is_watched` E' TRUE ALLORA LA STRINGA DEV'ESSERE (Usa ESATTAMENTE l'underscore _ tra remove e id. VIETATO USARE ASTERISCHI *):]
-🟢 L'hai già visto 👉 /remove_[id] per segnarlo come non visto
-[ALTRIMENTI LA STRINGA DEV'ESSERE (Usa ESATTAMENTE l'underscore _ tra watched e id. VIETATO USARE ASTERISCHI *):]
-👉 /watched_[id] per segnarlo come visto
+🟢 L'hai già visto 👉 /remove*[id] per segnarlo come non visto
+[ALTRIMENTI LA STRINGA DEV'ESSERE (Usa ESATTAMENTE l'underscore * tra watched e id. VIETATO USARE ASTERISCHI \*):]
+👉 /watched\_[id] per segnarlo come visto
 
 ---
 
