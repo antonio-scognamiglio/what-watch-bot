@@ -1,0 +1,18 @@
+services:
+  openclaw-gateway:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: what-watch-openclaw
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+    env_file:
+      - .env
+    volumes:
+      - /Users/tonyscogna/development/docker-volumes/what-watch-bot-openclaw:/home/node/.openclaw
+      - .:/home/node/.openclaw/workspace/what-watch-ai
+    ports:
+      - "18789:18789"
+      - "18790:18790"
+    init: true
+    restart: unless-stopped
+    command: ["node", "dist/index.js", "gateway", "--port", "18789"]
