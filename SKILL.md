@@ -328,10 +328,10 @@ Tipo: Serie TV
 
 ▶️ [Guarda il trailer su YouTube](trailer_url)
 
-[SE NEL JSON `is_watched` E' TRUE ALLORA LA STRINGA DEV'ESSERE:]
-🟢 L'hai già visto 👉 /remove*[id] per segnarlo come non visto
-[ALTRIMENTI:]
-👉 /watched*[id] per segnarlo come visto
+[SE NEL JSON `is_watched` E' TRUE ALLORA LA STRINGA DEV'ESSERE (Usa ESATTAMENTE l'underscore _ tra remove e id. VIETATO USARE ASTERISCHI *):]
+🟢 L'hai già visto 👉 /remove_[id] per segnarlo come non visto
+[ALTRIMENTI LA STRINGA DEV'ESSERE (Usa ESATTAMENTE l'underscore _ tra watched e id. VIETATO USARE ASTERISCHI *):]
+👉 /watched_[id] per segnarlo come visto
 
 ---
 
