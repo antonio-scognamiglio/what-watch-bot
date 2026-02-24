@@ -95,3 +95,19 @@ The project is organized as follows:
 - **`scripts/`**: Lightweight CLI entrypoints that OpenClaw calls when triggering the bot's abilities (e.g., `search.py`, `search_title.py`, `fetch_plot.py`).
 - **`SKILL.md`**: The brain of the bot. This file defines the agent's instructions, prompts, and how it maps natural language to the internal `scripts/`.
 - **`docker-compose.yml`**: The Docker configuration to run the OpenClaw host.
+
+---
+
+## 🧪 Testing
+
+This project uses `pytest` for automated testing, ensuring the core logics (pagination, SQLite caching, API fallbacks) are stable without making real network requests.
+
+To run the test suite and check code coverage:
+
+```bash
+# 1. Install testing dependencies (if not already installed)
+pip install -r requirements.txt
+
+# 2. Run the full test suite
+pytest tests/ -v --cov=src --cov-report=term-missing
+```
