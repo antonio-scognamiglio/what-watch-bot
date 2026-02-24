@@ -1,6 +1,6 @@
 import requests
 from src.config import Config
-from src.logger import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

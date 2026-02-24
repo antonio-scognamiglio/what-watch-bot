@@ -1,7 +1,7 @@
 import requests
 from src.config import Config
 from src.utils.platforms import build_platform_url, normalize_provider_name
-from src.logger import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

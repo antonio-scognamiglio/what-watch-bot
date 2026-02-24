@@ -2,7 +2,7 @@ import random
 from src.api.tmdb import search_tmdb, get_tmdb_total_pages
 from src.api.omdb import get_omdb_ratings
 from src.database import load_cache, save_cache
-from src.logger import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

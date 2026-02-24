@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.database import get_connection, get_prefs, get_watched_ids, make_cache_key
 from src.utils.pagination import fetch_page_from_cache
 from src.utils.formatters import build_media_card
-from src.logger import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
