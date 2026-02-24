@@ -1,19 +1,20 @@
-# Ambienti virtuali Python
+# Python virtual environments
 __pycache__/
 *.pyc
 
-# Database locale SQLite (DA NON CONDIVIDERE MAI SU GITHUB)
+# Local Database SQLite
 db/*.db
 db/*.sqlite
 db/*.sqlite3
 
-# Variabili d'ambiente e segreti (DA NON CONDIVIDERE MAI SU GITHUB)
+# Environment variables and secrets
 .env
+NEXT_STEPS.md
 
-# File temporanei di sistema
+# Temporary system files
 .DS_Store
 
-# Framework AI (scaffolding interno, non va su GitHub)
+# AI Framework (internal scaffolding, not to be shared on GitHub)
 .genesis/
 BOOTSTRAP.md
 
