@@ -1,20 +1,23 @@
 # Telegram Bot Commands
 
-Questo file contiene l'elenco dei comandi da registrare in **BotFather** per configurare il menu del bot su Telegram. Incolla semplicemente l'elenco qui sotto durante la configurazione (`/setcommands`).
+This file contains the list of commands to register in **BotFather** to configure the bot's command menu on Telegram. Simply paste the list below during setup (`/setcommands`).
 
 ```text
-setup - ⚙️ Profilazione completa (generi, piattaforme, filtri)
-genres - 🎭 Scegli i tuoi generi preferiti
-platforms - 📺 Scegli le tue piattaforme streaming
-year - 📅 Imposta un anno di uscita minimo
-suggest_movies - 🎬 Suggeriscimi film dai miei filtri
-suggest_series - 📺 Suggeriscimi serie TV dai miei filtri
-next_movies - 🍿 Mostra altri film suggeriti
-next_series - 🍿 Mostra altre serie TV suggerite
-find_title - 🔍 Cerca al volo il titolo di un film o serie
-watched - 👀 Mostra tutto ciò che hai segnato come visto
-results - 🔢 Imposta il numero di risultati (1-20)
-menu - 📋 Mostra l'elenco riassuntivo di tutti i comandi
+setup - ⚙️ Full setup wizard (genres, platforms, language, filters)
+genres - 🎭 Change your preferred genres
+platforms - 📺 Change your preferred streaming platforms
+year - 📅 Set a minimum release year
+suggest_movies - 🎬 Get movie suggestions based on your filters
+suggest_series - 📺 Get TV series suggestions based on your filters
+next_movies - 🍿 Show more movie suggestions
+next_series - 🍿 Show more TV series suggestions
+find_title - 🔍 Search for a specific movie or TV series by title
+watched - 👀 Show everything you've marked as watched
+results - 🔢 Set the number of results per page (1-20)
+language - 🌍 Change your language (e.g., en-US, it-IT, fr-FR)
+region - 📡 Change your streaming region (e.g., US, IT, FR)
+score - 🍅 Set the minimum Rotten Tomatoes score (default: 70)
+menu - 📋 Show the full command list
 ```
 
-**Nota aggiuntiva:** `find_title` sostituisce i vecchi `find_movie` e `find_series` perché la ricerca tramite TMDB avviene globalmente su entrambi i formati.
+**Note:** `find_title` replaces the old `find_movie` and `find_series` commands because TMDB search works globally across both formats.
