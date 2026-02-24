@@ -2,34 +2,16 @@ import os
 import sys
 import json
 import argparse
-import requests
 
-from config import Config, GENRE_MAPPING
+# Add project root to path so we can import 'src'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# We reuse the robust data fetching functions from search.py
-from search import (
-    get_omdb_ratings, get_tmdb_details,
-    get_youtube_trailer, get_watch_providers
-)
+from src.config import Config, GENRE_MAPPING
+from src.api.tmdb import search_tmdb_by_title, get_tmdb_details, get_watch_providers
+from src.api.omdb import get_omdb_ratings
+from src.api.youtube import get_youtube_trailer
 
-def search_by_title(query, media_type='multi'):
-    # media_type can be 'multi', 'movie', or 'tv'
-    url = f"https://api.themoviedb.org/3/search/{media_type}"
-    params = {
-        'api_key': Config.TMDB_API_KEY,
-        'language': Config.LANGUAGE,
-        'query': query,
-        'page': 1
-    }
-    try:
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            return response.json().get('results', [])
-    except Exception:
-        pass
-    return []
 
-def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('query', type=str, help='Title to search for')
     parser.add_argument('--type', type=str, choices=['movie', 'tv', 'both'], default='both', help='Media type')
@@ -38,7 +20,7 @@ def main():
     # Map 'both' to 'multi' for TMDB search API
     search_type = 'multi' if args.type == 'both' else args.type
     
-    raw_results = search_by_title(args.query, search_type)
+    raw_results = search_tmdb_by_title(args.query, search_type)
     
     # Filter out people ('person' media type) if multi search is used
     valid_items = [item for item in raw_results if item.get('media_type') != 'person']

@@ -1,7 +1,13 @@
+import sys
+import os
 import argparse
 import json
 import datetime
-import db_helper
+
+# Add project root to path so we can import 'src'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.database import get_connection
 
 def main():
     parser = argparse.ArgumentParser(description="Manage watched titles")
@@ -10,7 +16,7 @@ def main():
     parser.add_argument("--list", action="store_true", help="List all watched titles")
     args = parser.parse_args()
 
-    conn = db_helper.get_connection()
+    conn = get_connection()
     cursor = conn.cursor()
 
     if args.flag:

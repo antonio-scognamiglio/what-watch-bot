@@ -1,6 +1,12 @@
+import os
+import sys
 import argparse
 import json
-import db_helper
+
+# Add project root to path so we can import 'src'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.database import get_connection, get_prefs
 
 def main():
     parser = argparse.ArgumentParser(description="Setup user preferences")
@@ -12,7 +18,7 @@ def main():
     parser.add_argument("--view", action="store_true", help="View current preferences")
     args = parser.parse_args()
 
-    conn = db_helper.get_connection()
+    conn = get_connection()
     cursor = conn.cursor()
 
     if args.set_genres:
@@ -75,7 +81,7 @@ def main():
             print(json.dumps({"success": False, "error": "Invalid max_results format. Must be an integer."}))
 
     if args.view or (not args.set_genres and not args.set_platforms and args.set_include_watched is None and args.set_min_year is None and args.set_max_results is None):
-        prefs = db_helper.get_prefs(conn)
+        prefs = get_prefs(conn)
         print(json.dumps(prefs, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":

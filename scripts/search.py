@@ -2,174 +2,17 @@ import os
 import sys
 import json
 import argparse
-import requests
 import random
-import db_helper
-from platforms import build_platform_url, normalize_provider_name
-from config import Config, GENRE_MAPPING
 
+# Add project root to path so we can import 'src'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-def get_tmdb_total_pages(media_type, genres, providers, min_year=None):
-    url = f"https://api.themoviedb.org/3/discover/{media_type}"
-    params = {
-        'api_key': Config.TMDB_API_KEY,
-        'language': Config.LANGUAGE,
-        'watch_region': Config.REGION,
-        'with_watch_providers': '|'.join(map(str, providers)) if providers else '',
-        'with_genres': '|'.join(map(str, genres)) if genres else '',
-        'sort_by': 'popularity.desc', 
-        'page': 1
-    }
-    
-    if min_year:
-        if media_type == 'movie':
-            params['primary_release_date.gte'] = f"{min_year}-01-01"
-        else:
-            params['first_air_date.gte'] = f"{min_year}-01-01"
-    try:
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            return response.json().get('total_pages', 1)
-    except Exception:
-        pass
-    return 1
+from src.database import get_connection, get_prefs, get_watched_ids
+from src.config import Config, GENRE_MAPPING
+from src.api.tmdb import get_tmdb_total_pages, search_tmdb, get_tmdb_details, get_watch_providers
+from src.api.omdb import get_omdb_ratings
+from src.api.youtube import get_youtube_trailer
 
-def search_tmdb(media_type, genres, providers, page=1, min_year=None):
-    url = f"https://api.themoviedb.org/3/discover/{media_type}"
-    params = {
-        'api_key': Config.TMDB_API_KEY,
-        'language': Config.LANGUAGE,
-        'watch_region': Config.REGION,
-        'with_watch_providers': '|'.join(map(str, providers)) if providers else '',
-        'with_genres': '|'.join(map(str, genres)) if genres else '',
-        'sort_by': 'popularity.desc',
-        'page': page
-    }
-    
-    if min_year:
-        if media_type == 'movie':
-            params['primary_release_date.gte'] = f"{min_year}-01-01"
-        else:
-            params['first_air_date.gte'] = f"{min_year}-01-01"
-            
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    return response.json().get('results', [])
-
-def get_omdb_ratings(title, year=None):
-    if not Config.OMDB_API_KEY:
-        return {}
-    url = "http://www.omdbapi.com/"
-    params = {'apikey': Config.OMDB_API_KEY, 't': title}
-    if year:
-        params['y'] = year
-    try:
-        response = requests.get(url, params=params, timeout=5)
-        if response.status_code != 200:
-            return {}
-        data = response.json()
-        if data.get('Response') == 'False':
-            return {}
-    except Exception:
-        return {}
-    
-    ratings_dict = {}
-    try:
-        imdb_val = float(data.get('imdbRating', '0'))
-        if imdb_val > 0: ratings_dict['imdb'] = imdb_val
-    except ValueError:
-        pass
-    try:
-        meta_val = int(data.get('Metascore', '0'))
-        if meta_val > 0: ratings_dict['metacritic'] = meta_val
-    except ValueError:
-        pass
-        
-    ratings = data.get('Ratings', [])
-    for rating in ratings:
-        if rating.get('Source') == 'Rotten Tomatoes':
-            val = rating.get('Value', '')
-            if '%' in val:
-                try: ratings_dict['tomatometer'] = int(val.replace('%', ''))
-                except ValueError: pass
-                
-    return ratings_dict
-
-def get_tmdb_details(item_id, media_type):
-    url = f"https://api.themoviedb.org/3/{media_type}/{item_id}"
-    params = {'api_key': Config.TMDB_API_KEY, 'language': Config.LANGUAGE, 'append_to_response': 'credits'}
-    try:
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            return response.json()
-    except Exception:
-        pass
-    return None
-
-
-def get_youtube_trailer(query):
-    if not Config.YOUTUBE_API_KEY:
-        return None
-    url = "https://www.googleapis.com/youtube/v3/search"
-    params = {
-        'key': Config.YOUTUBE_API_KEY,
-        'q': f"{query} trailer ufficiale",
-        'part': 'snippet',
-        'type': 'video',
-        'maxResults': 1
-    }
-    try:
-        response = requests.get(url, params=params, timeout=5)
-        if response.status_code == 200:
-            items = response.json().get('items', [])
-            if items:
-                vid_id = items[0]['id']['videoId']
-                return f"https://www.youtube.com/watch?v={vid_id}"
-    except Exception:
-        pass
-    return None
-
-def get_watch_providers(item_id, media_type, title):
-    """
-    Returns a list of platform objects:
-    { name, url, tier }
-    where tier is 'subscription' (flatrate) or 'free' (free + ads).
-    """
-    url = f"https://api.themoviedb.org/3/{media_type}/{item_id}/watch/providers"
-    params = {'api_key': Config.TMDB_API_KEY}
-    try:
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            data = response.json().get('results', {})
-            it_data = data.get(Config.REGION, {})
-            platforms = []
-            seen = set()
-
-            # Subscription tier (flatrate)
-            for p in it_data.get('flatrate', []):
-                name = normalize_provider_name(p['provider_name'])
-                if name not in seen:
-                    seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'subscription'})
-
-            # Free tier (no ads)
-            for p in it_data.get('free', []):
-                name = normalize_provider_name(p['provider_name'])
-                if name not in seen:
-                    seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'free'})
-
-            # Free with ads tier
-            for p in it_data.get('ads', []):
-                name = normalize_provider_name(p['provider_name'])
-                if name not in seen:
-                    seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'ads'})
-
-            return platforms
-    except Exception:
-        pass
-    return []
 
 def main():
     parser = argparse.ArgumentParser()
@@ -177,10 +20,10 @@ def main():
     parser.add_argument('--type', type=str, choices=['movie', 'tv', 'both'], default='both', help='Media type to search')
     parser.add_argument('--seed', type=int, default=None, help='Seed for deterministic deep paging shuffle')
     args = parser.parse_args()
-    
-    conn = db_helper.get_connection()
-    prefs = db_helper.get_prefs(conn)
-    watched_ids = db_helper.get_watched_ids(conn)
+    # Initialize DB (which also initializes tables if missing)
+    conn = get_connection()
+    prefs = get_prefs(conn)
+    watched_ids = get_watched_ids(conn)
     
     genres = prefs.get('genres', [])
     platforms = prefs.get('platforms', [])
