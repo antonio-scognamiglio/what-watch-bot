@@ -160,3 +160,28 @@ def test_fetch_wikipedia_plot_not_found(mocker):
     
     assert plot is None
     assert mock_get.call_count == 2
+
+def test_fetch_wikipedia_plot_no_extract(mocker):
+    """Test when Wikipedia finds the page but there is no extract content."""
+    mock_get = mocker.patch('requests.get')
+    
+    search_response = Mock()
+    search_response.status_code = 200
+    search_response.json.return_value = {"query": {"search": [{"title": "Blank Page"}]}}
+    
+    extract_response = Mock()
+    extract_response.status_code = 200
+    extract_response.json.return_value = {"query": {"pages": {"1": {"title": "Blank Page"}}}}
+    
+    mock_get.side_effect = [search_response, extract_response]
+    
+    plot = fetch_wikipedia_plot("Blank Page")
+    assert plot is None
+
+def test_fetch_wikipedia_plot_exception_handling(mocker):
+    """Test broad exception catching during requests."""
+    mock_get = mocker.patch('requests.get')
+    mock_get.side_effect = Exception("Wikipedia is down")
+    
+    plot = fetch_wikipedia_plot("Inception")
+    assert plot is None
