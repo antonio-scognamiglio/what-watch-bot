@@ -41,8 +41,6 @@ cp .env.example .env
 nano .env
 ```
 
-_Note: Your API keys are kept safely in `.env` and will not be pushed to the repository._
-
 ### 3. Running the Project
 
 Start the Docker container in detached mode:
