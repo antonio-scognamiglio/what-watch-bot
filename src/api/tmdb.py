@@ -1,6 +1,9 @@
 import requests
 from src.config import Config
 from src.utils.platforms import build_platform_url, normalize_provider_name
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 def get_tmdb_total_pages(media_type, genres, providers, min_year=None, language='en-US', region='US'):
     url = f"https://api.themoviedb.org/3/discover/{media_type}"
@@ -20,10 +23,13 @@ def get_tmdb_total_pages(media_type, genres, providers, min_year=None, language=
         else:
             params['first_air_date.gte'] = f"{min_year}-01-01"
 
+    logger.info(f"Fetching TMDB total pages for {media_type}")
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
-    return min(data.get('total_pages', 1), 500)
+    total_pages = min(data.get('total_pages', 1), 500)
+    logger.info(f"TMDB total pages: {total_pages}")
+    return total_pages
 
 def search_tmdb(media_type, genres, providers, page=1, min_year=None, language='en-US', region='US'):
     url = f"https://api.themoviedb.org/3/discover/{media_type}"
@@ -43,19 +49,24 @@ def search_tmdb(media_type, genres, providers, page=1, min_year=None, language='
         else:
             params['first_air_date.gte'] = f"{min_year}-01-01"
 
+    logger.info(f"Searching TMDB for {media_type} (page {page}, min_year={min_year})")
     response = requests.get(url, params=params)
     response.raise_for_status()
-    return response.json().get('results', [])
+    results = response.json().get('results', [])
+    logger.info(f"Found {len(results)} items from TMDB discovery")
+    return results
 
 def get_tmdb_details(item_id, media_type, language='en-US'):
     url = f"https://api.themoviedb.org/3/{media_type}/{item_id}"
     params = {'api_key': Config.TMDB_API_KEY, 'language': language, 'append_to_response': 'credits'}
     try:
+        logger.info(f"Fetching TMDB details for {media_type} {item_id}")
         response = requests.get(url, params=params)
         if response.status_code == 200:
             return response.json()
-    except Exception:
-        pass
+        logger.warning(f"Failed to fetch details for {media_type} {item_id}: status {response.status_code}")
+    except Exception as e:
+        logger.error(f"Error fetching TMDB details for {media_type} {item_id}: {e}")
     return None
 
 def search_tmdb_by_title(query, media_type='multi', language='en-US'):
@@ -67,11 +78,15 @@ def search_tmdb_by_title(query, media_type='multi', language='en-US'):
         'page': 1
     }
     try:
+        logger.info(f"Searching TMDB by title: '{query}' ({media_type})")
         response = requests.get(url, params=params)
         if response.status_code == 200:
-            return response.json().get('results', [])
-    except Exception:
-        pass
+            results = response.json().get('results', [])
+            logger.info(f"Found {len(results)} results for title search")
+            return results
+        logger.warning(f"Title search failed for '{query}': status {response.status_code}")
+    except Exception as e:
+        logger.error(f"Error searching TMDB by title '{query}': {e}")
     return []
 
 def get_watch_providers(item_id, media_type, title, region='US'):
@@ -83,6 +98,7 @@ def get_watch_providers(item_id, media_type, title, region='US'):
     url = f"https://api.themoviedb.org/3/{media_type}/{item_id}/watch/providers"
     params = {'api_key': Config.TMDB_API_KEY}
     try:
+        logger.info(f"Fetching watch providers for {media_type} {item_id}")
         response = requests.get(url, params=params)
         if response.status_code == 200:
             data = response.json().get('results', {})
@@ -111,7 +127,9 @@ def get_watch_providers(item_id, media_type, title, region='US'):
                     seen.add(name)
                     platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'ads'})
 
+            logger.info(f"Found {len(platforms)} providers for {title} in {region}")
             return platforms
-    except Exception:
-        pass
+        logger.warning(f"Watch provider lookup failed for {media_type} {item_id}: status {response.status_code}")
+    except Exception as e:
+        logger.error(f"Error fetching watch providers for {media_type} {item_id}: {e}")
     return []
