@@ -3,6 +3,9 @@ import json
 import os
 import hashlib
 import time
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'db', 'watchbot.db')
 
@@ -10,38 +13,46 @@ CACHE_TTL_SECONDS = 12 * 60 * 60  # 12 hours
 
 def get_connection():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    _init_db(conn)
-    return conn
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        _init_db(conn)
+        return conn
+    except sqlite3.Error as e:
+        logger.error(f"Failed to connect to SQlite DB at {DB_PATH}: {e}")
+        raise
 
 def _init_db(conn):
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS prefs (
-            key TEXT PRIMARY KEY,
-            value TEXT
-        )
-    ''')
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS watched (
-            tmdb_id INTEGER PRIMARY KEY,
-            title TEXT,
-            media_type TEXT,
-            flagged_at TEXT
-        )
-    ''')
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS search_cache (
-            cache_key       TEXT PRIMARY KEY,
-            pool            TEXT NOT NULL,          -- JSON array of enriched result cards remaining
-            tmdb_pages_movie TEXT NOT NULL,         -- JSON array of TMDB movie page numbers still to process
-            tmdb_pages_tv   TEXT NOT NULL,          -- JSON array of TMDB tv page numbers still to process
-            exhausted       INTEGER DEFAULT 0,      -- 1 when all TMDB pages have been consumed
-            created_at      INTEGER NOT NULL        -- unix timestamp for TTL
-        )
-    ''')
-    conn.commit()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prefs (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS watched (
+                tmdb_id INTEGER PRIMARY KEY,
+                title TEXT,
+                media_type TEXT,
+                flagged_at TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS search_cache (
+                cache_key       TEXT PRIMARY KEY,
+                pool            TEXT NOT NULL,          -- JSON array of enriched result cards remaining
+                tmdb_pages_movie TEXT NOT NULL,         -- JSON array of TMDB movie page numbers still to process
+                tmdb_pages_tv   TEXT NOT NULL,          -- JSON array of TMDB tv page numbers still to process
+                exhausted       INTEGER DEFAULT 0,      -- 1 when all TMDB pages have been consumed
+                created_at      INTEGER NOT NULL        -- unix timestamp for TTL
+            )
+        ''')
+        conn.commit()
+    except sqlite3.Error as e:
+        logger.error(f"Failed to initialize SQLite schema: {e}")
+        raise
 
 def get_prefs(conn):
     cursor = conn.cursor()
@@ -85,22 +96,27 @@ def load_cache(conn, cache_key: str):
     Load a valid (non-expired) cache entry. Returns None if missing or expired.
     """
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM search_cache WHERE cache_key = ?", (cache_key,))
-    row = cursor.fetchone()
-    if row is None:
+    try:
+        cursor.execute("SELECT * FROM search_cache WHERE cache_key = ?", (cache_key,))
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        age = time.time() - row['created_at']
+        if age > CACHE_TTL_SECONDS:
+            logger.info(f"Invalidating expired cache key for '{cache_key}' (age {age}s > {CACHE_TTL_SECONDS}s)")
+            cursor.execute("DELETE FROM search_cache WHERE cache_key = ?", (cache_key,))
+            conn.commit()
+            return None
+        return {
+            'pool': json.loads(row['pool']),
+            'tmdb_pages_movie': json.loads(row['tmdb_pages_movie']),
+            'tmdb_pages_tv': json.loads(row['tmdb_pages_tv']),
+            'exhausted': bool(row['exhausted']),
+            'created_at': row['created_at'],
+        }
+    except sqlite3.Error as e:
+        logger.error(f"SQLite error loading cache '{cache_key}': {e}")
         return None
-    age = time.time() - row['created_at']
-    if age > CACHE_TTL_SECONDS:
-        cursor.execute("DELETE FROM search_cache WHERE cache_key = ?", (cache_key,))
-        conn.commit()
-        return None
-    return {
-        'pool': json.loads(row['pool']),
-        'tmdb_pages_movie': json.loads(row['tmdb_pages_movie']),
-        'tmdb_pages_tv': json.loads(row['tmdb_pages_tv']),
-        'exhausted': bool(row['exhausted']),
-        'created_at': row['created_at'],
-    }
 
 def save_cache(conn, cache_key: str, pool: list, tmdb_pages_movie: list,
                tmdb_pages_tv: list, exhausted: bool, created_at: int = None):
@@ -110,16 +126,20 @@ def save_cache(conn, cache_key: str, pool: list, tmdb_pages_movie: list,
     if created_at is None:
         created_at = int(time.time())
     cursor = conn.cursor()
-    cursor.execute('''
-        INSERT OR REPLACE INTO search_cache
-            (cache_key, pool, tmdb_pages_movie, tmdb_pages_tv, exhausted, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (
-        cache_key,
-        json.dumps(pool, ensure_ascii=False),
-        json.dumps(tmdb_pages_movie),
-        json.dumps(tmdb_pages_tv),
-        1 if exhausted else 0,
-        created_at,
-    ))
-    conn.commit()
+    try:
+        cursor.execute('''
+            INSERT OR REPLACE INTO search_cache
+                (cache_key, pool, tmdb_pages_movie, tmdb_pages_tv, exhausted, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            cache_key,
+            json.dumps(pool, ensure_ascii=False),
+            json.dumps(tmdb_pages_movie),
+            json.dumps(tmdb_pages_tv),
+            1 if exhausted else 0,
+            created_at,
+        ))
+        conn.commit()
+        logger.info(f"Successfully saved cache for '{cache_key}' (pool: {len(pool)})")
+    except sqlite3.Error as e:
+        logger.error(f"SQLite error saving cache '{cache_key}': {e}")

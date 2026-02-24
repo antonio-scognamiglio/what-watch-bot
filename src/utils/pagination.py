@@ -2,10 +2,14 @@ import random
 from src.api.tmdb import search_tmdb, get_tmdb_total_pages
 from src.api.omdb import get_omdb_ratings
 from src.database import load_cache, save_cache
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def _build_page_lists(media_type_pref, genres, platforms, min_year, language, region, rng):
     """Fetch total TMDB pages and return shuffled lists for movie and tv."""
+    logger.info("Building shuffled page lists for new search session")
     movie_pages = (
         get_tmdb_total_pages('movie', genres, platforms, min_year, language, region)
         if media_type_pref in ('movie', 'both') else 0
@@ -18,6 +22,7 @@ def _build_page_lists(media_type_pref, genres, platforms, min_year, language, re
     tv_list = list(range(1, min(tv_pages, 500) + 1))
     if movie_list: rng.shuffle(movie_list)
     if tv_list: rng.shuffle(tv_list)
+    logger.info(f"Page queues initialized: {len(movie_list)} movie pages, {len(tv_list)} tv pages")
     return movie_list, tv_list
 
 
@@ -32,6 +37,9 @@ def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, re
     MAX_ATTEMPTS = 150
     attempts = 0
     pool = list(current_pool)
+    initial_pool_size = len(pool)
+    
+    logger.info(f"Refilling cache pool (current size: {initial_pool_size}, target: {target_count})")
 
     while len(pool) < target_count and attempts < MAX_ATTEMPTS and (tmdb_pages_movie or tmdb_pages_tv):
         attempts += 1
@@ -39,6 +47,7 @@ def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, re
         movies = []
         if media_type_pref in ('movie', 'both') and tmdb_pages_movie:
             page = tmdb_pages_movie.pop(0)
+            logger.info(f"Fetching TMDB movie page {page} cache list remaining: {len(tmdb_pages_movie)}")
             movies = search_tmdb('movie', genres, platforms, page, min_year, language, region)
             for m in movies:
                 m['media_type'] = 'movie'
@@ -46,6 +55,7 @@ def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, re
         shows = []
         if media_type_pref in ('tv', 'both') and tmdb_pages_tv:
             page = tmdb_pages_tv.pop(0)
+            logger.info(f"Fetching TMDB tv page {page} cache list remaining: {len(tmdb_pages_tv)}")
             shows = search_tmdb('tv', genres, platforms, page, min_year, language, region)
             for s in shows:
                 s['media_type'] = 'tv'
@@ -82,8 +92,15 @@ def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, re
                 item['tmdb_rating'] = tmdb_rating
                 item['is_watched'] = is_watched
                 pool.append(item)
+                logger.info(f"Added item '{title}' to pool (Pool size: {len(pool)})")
 
     exhausted = not tmdb_pages_movie and not tmdb_pages_tv
+    
+    if exhausted:
+        logger.warning(f"TMDB search exhausted! Final pool size: {len(pool)}")
+    else:
+        logger.info(f"Pool refill complete. Total items checked in {attempts} attempt(s). Final pool size: {len(pool)}")
+        
     return pool, tmdb_pages_movie, tmdb_pages_tv, exhausted
 
 
@@ -97,10 +114,12 @@ def fetch_page_from_cache(conn, cache_key, items_per_page, seed, media_type_pref
     if needed, pops the first `items_per_page` items, persists the updated state,
     and returns the page results.
     """
+    logger.info(f"Requesting '{items_per_page}' items for cache key '{cache_key}'")
     rng = random.Random(seed)
     state = load_cache(conn, cache_key)
 
     if state is None:
+        logger.info("Cache MISS / Expired. Initializing cold start.")
         # Cold start — build the shuffled TMDB page lists
         movie_list, tv_list = _build_page_lists(
             media_type_pref, genres, platforms, min_year, language, region, rng
@@ -109,25 +128,32 @@ def fetch_page_from_cache(conn, cache_key, items_per_page, seed, media_type_pref
         exhausted = False
         created_at = None  # save_cache will set current timestamp
     else:
+        logger.info("Cache HIT. Loading session state.")
         pool = state['pool']
         movie_list = state['tmdb_pages_movie']
         tv_list = state['tmdb_pages_tv']
         exhausted = state['exhausted']
         created_at = state['created_at']
+        logger.info(f"Restored pool size: {len(pool)}. Exhausted flag: {exhausted}")
         # Re-seed rng — it's only used for shuffling new TMDB results
         # (the page ordering is already persisted, rng is stateless here)
 
     # Refill pool if needed and TMDB is not exhausted
     if len(pool) < items_per_page and not exhausted:
+        logger.info(f"Pool needs refill. Current: {len(pool)}, Target: {items_per_page}")
         pool, movie_list, tv_list, exhausted = _fetch_and_filter(
             media_type_pref, genres, platforms, min_year, language, region,
             watched_ids, include_watched, rt_min_score,
             movie_list, tv_list, rng, items_per_page, pool
         )
+    elif len(pool) >= items_per_page:
+        logger.info(f"Pool has sufficient items ({len(pool)} >= {items_per_page}). No fetch needed.")
 
     # Pop the page from the front of the pool
     page_results = pool[:items_per_page]
     remaining_pool = pool[items_per_page:]
+    
+    logger.info(f"Popping {len(page_results)} items. Remaining pool size: {len(remaining_pool)}")
 
     # Persist updated state (keep original created_at to respect TTL correctly)
     save_cache(conn, cache_key, remaining_pool, movie_list, tv_list, exhausted, created_at)
