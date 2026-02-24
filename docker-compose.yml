@@ -9,7 +9,7 @@ services:
       - .env
     volumes:
       - /Users/tonyscogna/development/docker-volumes/what-watch-bot-openclaw:/home/node/.openclaw
-      - .:/home/node/.openclaw/workspace/what-watch-ai
+      - .:/home/node/.openclaw/workspace/what-watch-bot
     ports:
       - "18789:18789"
       - "18790:18790"
