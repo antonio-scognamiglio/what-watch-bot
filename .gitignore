@@ -20,3 +20,10 @@ BOOTSTRAP.md
 
 # OpenClaw Local Volume Data
 openclaw-data/
+
+# Testing and Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.pytest_cache/
