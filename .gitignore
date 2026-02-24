@@ -16,3 +16,6 @@ db/*.sqlite3
 # Framework AI (scaffolding interno, non va su GitHub)
 .genesis/
 BOOTSTRAP.md
+
+# OpenClaw Local Volume Data
+openclaw-data/

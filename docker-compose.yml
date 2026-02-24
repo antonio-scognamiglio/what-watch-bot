@@ -1,6 +1,6 @@
 services:
   openclaw-gateway:
-    image: ghcr.io/openclaw/openclaw:latest
+    build: .
     container_name: what-watch-openclaw
     environment:
       HOME: /home/node
@@ -8,7 +8,7 @@ services:
     env_file:
       - .env
     volumes:
-      - /Users/tonyscogna/development/docker-volumes/what-watch-bot-openclaw:/home/node/.openclaw
+      - openclaw_data:/home/node/.openclaw
       - .:/home/node/.openclaw/workspace/what-watch-bot
     ports:
       - "18789:18789"
@@ -16,3 +16,10 @@ services:
     init: true
     restart: unless-stopped
     command: ["node", "dist/index.js", "gateway", "--port", "18789"]
+
+volumes:
+  openclaw_data:
+    # Named volume managed by Docker — created automatically on first run.
+    # Data is stored in Docker's internal storage (~/.local/share/docker/volumes on Linux/Mac).
+    # To inspect: docker volume inspect what-watch-bot_openclaw_data
+    # To backup:  docker run --rm -v what-watch-bot_openclaw_data:/data -v $(pwd):/backup alpine tar czf /backup/openclaw-backup.tar.gz /data
