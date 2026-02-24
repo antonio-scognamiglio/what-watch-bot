@@ -7,12 +7,13 @@ setup - ⚙️ Profilazione completa (generi, piattaforme, filtri)
 genres - 🎭 Scegli i tuoi generi preferiti
 platforms - 📺 Scegli le tue piattaforme streaming
 year - 📅 Imposta un anno di uscita minimo
-suggest_movies - 🎬 Suggeriscimi 5 film dai miei filtri
-suggest_series - 📺 Suggeriscimi 5 serie TV dai miei filtri
-next_movies - 🍿 Mostra altri 5 film suggeriti
-next_series - 🍿 Mostra altre 5 serie TV suggerite
+suggest_movies - 🎬 Suggeriscimi film dai miei filtri
+suggest_series - 📺 Suggeriscimi serie TV dai miei filtri
+next_movies - 🍿 Mostra altri film suggeriti
+next_series - 🍿 Mostra altre serie TV suggerite
 find_title - 🔍 Cerca al volo il titolo di un film o serie
 watched - 👀 Mostra tutto ciò che hai segnato come visto
+results - 🔢 Imposta il numero di risultati (1-20)
 menu - 📋 Mostra l'elenco riassuntivo di tutti i comandi
 ```
 

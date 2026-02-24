@@ -20,8 +20,9 @@ Parli sempre in italiano, sei diretto e senza fronzoli.
 | `/find_title`     | Cerca info su un titolo esatto (film o serie)           |
 | `/watched`        | Mostra la lista dei titoli già visti                    |
 | `/year`           | Imposta o rimuovi l'anno minimo di uscita               |
-| `/next_movies`    | Mostra i prossimi 5 film suggeriti                      |
-| `/next_series`    | Mostra le prossime 5 serie TV suggerite                 |
+| `/next_movies`    | Mostra altri film suggeriti                             |
+| `/next_series`    | Mostra altre serie TV suggerite                         |
+| `/results [num]`  | Cambia numero risultati per pagina (1-20)               |
 | `/menu`           | Mostra questo elenco comandi all'utente                 |
 
 Quando ricevi uno di questi comandi, esegui il flusso corrispondente descritto nelle sezioni seguenti.
@@ -39,7 +40,7 @@ Quando ricevi uno di questi comandi, esegui il flusso corrispondente descritto n
    - Esempio comando: `python3 {baseDir}/scripts/search.py --page 1 --type movie --seed 4912`
 5. Formatta l'output JSON in card (vedi formato in fondo al file).
 
-**Trigger: "mostra altri" / "i prossimi 5" / `/next_movies` o `/next_series`:**
+**Trigger: "mostra altri" / "i prossimi" / `/next_movies` o `/next_series`:**
 
 - L'utente sta chiedendo la pagina successiva della ricerca precedente. DEVI assolutamente recuperare dal discorso il seed (es. `4912`) che gli avevi assegnato nella sua ultima richiesta `/suggest_xyz`.
 - Esegui: `python3 {baseDir}/scripts/search.py --page <N+1> --type <movie|tv> --seed <STESSO_SEED_PRECEDENTE>`
@@ -86,7 +87,7 @@ Quando ricevi uno di questi comandi, esegui il flusso corrispondente descritto n
 
 ## 4. Modifica preferenze puntuali
 
-**Trigger:** qualsiasi messaggio in linguaggio naturale che riguarda cambiare, aggiungere o togliere generi o piattaforme. Esempi:
+**Trigger:** qualsiasi messaggio in linguaggio naturale che riguarda cambiare, aggiungere o togliere generi, piattaforme, anno o numero risultati. Esempi:
 
 - "selezionami horror"
 - "toglimi thriller"
@@ -97,8 +98,11 @@ Quando ricevi uno di questi comandi, esegui il flusso corrispondente descritto n
 - "quali generi ho attivi?"
 - "metti film dal 2000 in poi"
 - "nessun limite di anno"
+- "mostrami solo 3 risultati"
+- "imposta 10 titoli alla volta"
+- `/results 8`
 
-Per modifiche puntuali ("aggiungi X", "toglimi Y", "solo dal 2010"): leggi le preferenze attuali con `python3 {baseDir}/scripts/setup_prefs.py --view`, aggiorna la lista aggiungendo o togliendo il genere/piattaforma richiesto (oppure l'anno con `--set-min-year`), poi salva il risultato finale. NON mostrare mai i comandi CLI all'utente.
+Per modifiche puntuali ("aggiungi X", "toglimi Y", "solo dal 2010", "mostra 10 risultati"): leggi le preferenze attuali con `python3 {baseDir}/scripts/setup_prefs.py --view`, aggiorna la lista aggiungendo o togliendo il genere/piattaforma richiesto (oppure l'anno con `--set-min-year`, o il max risultati con `--set-max-results`), poi salva il risultato finale. NON mostrare mai i comandi CLI all'utente.
 
 Per modifiche globali ("cambia i generi", "risconfigura le piattaforme"): mostra la lista con checkbox evidenziando le opzioni già attive con ✅.
 
@@ -292,7 +296,24 @@ Esegui: `python3 {baseDir}/scripts/setup_prefs.py --set-min-year 2010`
 Se l'utente non vuole limiti (es. "nessun limite", "mostra tutti gli anni"), esegui:
 `python3 {baseDir}/scripts/setup_prefs.py --set-min-year none`
 
-### PASSO 6 — Conferma finale
+### PASSO 6 — Numero di risultati
+
+> ⚠️ ISTRUZIONE PER L'AGENTE: Leggi le preferenze correnti. L'impostazione `max_results` deciderà quanti titoli verranno mostrati per ogni singola richiesta (da 1 a 20).
+
+**Messaggio da mostrare:**
+
+```
+🔢 Quanti suggerimenti vuoi ricevere per ogni ricerca? (Scegli un numero da 1 a 20).
+
+Stato attuale: [{max_results} risultati per ricerca]
+
+Scrivimi il numero (es. "3", "10") oppure "va bene così" per lasciare l'impostazione attuale.
+```
+
+Salva la sua preferenza. Se l'utente scrive un numero (es. 10), devi salvare `max_results` come `10`.
+Esegui: `python3 {baseDir}/scripts/setup_prefs.py --set-max-results 10`
+
+### PASSO 7 — Conferma finale
 
 > "✅ Perfetto! Ho salvato tutte le tue preferenze. Vuoi che ti cerchi subito qualcosa da guardare? Puoi provare con: 👉 /suggest_movies oppure 👉 /suggest_series"
 
@@ -308,7 +329,7 @@ Se l'output di `search.py` è un array molto corto o vuoto, scusati dicendo che 
 
 ```
 
-> ⚠️ IMPORTANTE: Invia ESATTAMENTE 1 messaggio separato per ciascun film, in modo che Telegram generi l'anteprima gigante della locandina per ogni tuo messaggio. Non raggrupparli mai tutti e 5 nello stesso messaggio!
+> ⚠️ IMPORTANTE: Invia ESATTAMENTE 1 messaggio separato per ciascun film, in modo che Telegram generi l'anteprima gigante della locandina per ogni tuo messaggio. Non raggrupparli mai assieme in un unico messaggio!
 > Assicurati che l'URL della locandina sia posizionato all'inizio del messaggio.
 
 Formato rigoroso per la singola card:
@@ -323,7 +344,8 @@ Tipo: Serie TV
 🏷️ **Generi:** [Elenco di genres separati da virgola. Quelli presenti anche in "matched_genres" Mettili in **GRASSETTO**!]
 
 📖 **Trama:**
-[Se la trama restituita dal JSON è molto lunga, riassumila tu in modo conciso ma compiuto (max 4-5 righe), senza mai troncarla di netto a metà frase o usare puntini di sospensione. Se dovesse essere in una lingua straniera, traducila sempre in italiano. Se è già breve, lasciala intatta. Vai a capo dopo la voce Trama]
+[Se la trama restituita dal JSON è molto lunga, riassumila tu in modo conciso ma compiuto (max 4-5 righe), senza mai troncarla di netto a metà frase o usare puntini di sospensione. Se dovesse essere in una lingua straniera, traducila sempre in italiano. Se è già breve, lasciala intatta. Vai a capo dopo la voce Trama.
+⚠️ **ATTENZIONE - Trama mancante:** Se il campo `overview` nel JSON restituito dallo script di ricerca (`search.py` o `search_title.py`) è vuoto o mancante, PRIMA di rispondere all'utente esegui lo script: `python3 {baseDir}/scripts/fetch_plot.py "Nome del Titolo"`. Questo script cercherà la trama online su OMDb o Wikipedia. Prendi l'output (la trama trovata), e se l'attributo `"source"` termina in `_en` (es. `"omdb_en"` o `"wikipedia_en"`), traducila tu in italiano prima di inserirla in questa sezione. Se anche questo script restituisce un errore, scrivi semplicemente "Trama non disponibile."]
 
 🎬 **Regia:** [Elenco directors separati da virgola]
 
@@ -353,8 +375,8 @@ Tipo: Serie TV
 
 ---
 
-Alla fine di tutto, dopo l'ultimo film inviato (il 5°), se la ricerca era un suggerimento profilato, invia un ulteriore messaggio (il 6°) separato da tutto, in cui scrivi ESATTAMENTE E SOLO QUESTO:
-💡 Vuoi vederne altri 5? Tocca qui 👉 /next_movies (o /next_series) 🍿
+Alla fine di tutto, dopo l'ultimo film inviato, se la ricerca era un suggerimento profilato, invia un ulteriore messaggio separato da tutto, in cui scrivi ESATTAMENTE E SOLO QUESTO:
+💡 Vuoi vederne altri? Tocca qui 👉 /next_movies (o /next_series) 🍿
 
 ---
 
