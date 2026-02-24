@@ -37,7 +37,7 @@ Clone the repository and prepare your environment variables:
 # 1. Copy the example environment file
 cp .env.example .env
 
-# 2. Open .env and paste your API keys and customize preferences (like language: it-IT, region: IT)
+# 2. Open .env and fill in your API keys
 nano .env
 ```
 
@@ -51,7 +51,7 @@ Start the Docker container in detached mode:
 docker compose up -d
 ```
 
-This will automatically **build** a local Docker image from the included `Dockerfile` (which pre-installs all required Python dependencies) and start the service. A local folder named `openclaw-data/` will be created automatically to store your local configuration, cache, and Telegram session data.
+This will automatically **build** a local Docker image from the included `Dockerfile` (which pre-installs all required Python dependencies) and start the service. A Docker named volume is created automatically to persist your configuration, session data, and cache.
 
 > [!NOTE]
 > The first `docker compose up -d` takes slightly longer because it builds the image. Subsequent runs are instant. If you pull an update and want to rebuild the image, run `docker compose up -d --build`.
@@ -79,7 +79,7 @@ DO NOT manually edit Telegram keys or sessions. It's highly recommended to use t
    npm run onboard
    ```
 
-   _Follow the interactive prompt. When asked, paste the Telegram Token you just got from BotFather and select the `what-watch-bot` skill._\_
+   _Follow the interactive prompt. When asked, paste the Telegram Token you just got from BotFather and select the `what-watch-bot` skill._
 
 3. Ensure the `what-watch-bot` skill is properly registered in OpenClaw. OpenClaw needs to know this folder contains a skill.
 
@@ -87,7 +87,7 @@ DO NOT manually edit Telegram keys or sessions. It's highly recommended to use t
 
 ## 📁 Project Structure
 
-This bot has been refactored for modularity:
+The project is organized as follows:
 
 - **`src/`**: Contains the core logic and integrations.
   - `api/`: API modules (`tmdb.py`, `omdb.py`, `youtube.py`, `wikipedia.py`).
