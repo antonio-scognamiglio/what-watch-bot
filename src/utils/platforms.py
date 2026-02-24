@@ -14,6 +14,7 @@ from urllib.parse import quote, quote_plus
 # Deduplication in get_watch_providers() uses the canonical name,
 # so aliases pointing to the same name are automatically collapsed.
 PROVIDER_ALIASES = {
+    "Netflix with Ads":                  "Netflix",
     "Amazon Prime Video with Ads":       "Amazon Prime Video",
     "Infinity Selection Amazon Channel": "Amazon Prime Video",
     "Prime Video":                       "Amazon Prime Video",
