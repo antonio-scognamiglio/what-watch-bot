@@ -1,7 +1,5 @@
 # Testing Execution Pipeline Rules
 
-When modifying the `what-watch-bot` repository, you must adhere to the following deterministic constraints to guarantee test correctness and prevent regressions.
-
 - **Test-Driven Requirements**: Whenever you add a new feature, update logic, or fix a bug, you MUST create or update the corresponding tests in the `tests/` directory.
 - **Follow Testing Patterns**: You MUST read and follow the installed skill at `.agents/skills/python-testing-patterns/SKILL.md` for writing tests.
 - **Isolation Rules**: You MUST use `pytest` as the testing framework and `pytest-mock` to completely isolate external dependencies. Do not make real network requests in tests.

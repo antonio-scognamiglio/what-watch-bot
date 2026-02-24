@@ -1,7 +1,5 @@
 # Architecture & Code Organization Rules
 
-When modifying the `what-watch-bot` repository, you must adhere to the following strict, deterministic constraints to guarantee architectural consistency.
-
 - **Separation of Concerns**: You MUST strictly categorize all logic into three directories:
   - `src/api/` for external HTTP interactions
   - `src/utils/` for reusable helpers/formatters
