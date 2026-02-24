@@ -74,7 +74,7 @@ DO NOT manually edit Telegram keys or sessions. It's highly recommended to use t
 2. Run the onboarding command:
 
    ```bash
-   npm run onboard
+   node dist/index.js onboard
    ```
 
    _Follow the interactive prompt. When asked, paste the Telegram Token you just got from BotFather and select the `what-watch-bot` skill._
@@ -95,13 +95,3 @@ The project is organized as follows:
 - **`scripts/`**: Lightweight CLI entrypoints that OpenClaw calls when triggering the bot's abilities (e.g., `search.py`, `search_title.py`, `fetch_plot.py`).
 - **`SKILL.md`**: The brain of the bot. This file defines the agent's instructions, prompts, and how it maps natural language to the internal `scripts/`.
 - **`docker-compose.yml`**: The Docker configuration to run the OpenClaw host.
-
----
-
-## 🛠 Adding New Features
-
-If you want to extend the bot, follow the architecture:
-
-1. Add new external integrations or logic modules inside `src/`.
-2. Create a new lightweight script in `scripts/` to execute your new logic.
-3. Update `SKILL.md` to teach the OpenClaw agent how to use your new script!
