@@ -3,11 +3,11 @@ import sys
 import json
 import argparse
 import requests
-from dotenv import load_dotenv
+
+from config import Config, GENRE_MAPPING
 
 # We reuse the robust data fetching functions from search.py
 from search import (
-    TMDB_API_KEY, REGION, LANGUAGE, GENRE_MAPPING,
     get_omdb_ratings, get_tmdb_details,
     get_youtube_trailer, get_watch_providers
 )
@@ -16,8 +16,8 @@ def search_by_title(query, media_type='multi'):
     # media_type can be 'multi', 'movie', or 'tv'
     url = f"https://api.themoviedb.org/3/search/{media_type}"
     params = {
-        'api_key': TMDB_API_KEY,
-        'language': LANGUAGE,
+        'api_key': Config.TMDB_API_KEY,
+        'language': Config.LANGUAGE,
         'query': query,
         'page': 1
     }
@@ -107,7 +107,7 @@ def main():
     print(json.dumps(final_output, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
-    if not TMDB_API_KEY:
+    if not Config.TMDB_API_KEY:
         print(json.dumps({"error": "TMDB_API_KEY must be set in .env"}))
         sys.exit(1)
     main()

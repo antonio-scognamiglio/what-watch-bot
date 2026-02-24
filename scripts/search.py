@@ -4,68 +4,17 @@ import json
 import argparse
 import requests
 import random
-from urllib.parse import quote_plus
-from dotenv import load_dotenv
 import db_helper
+from platforms import build_platform_url, normalize_provider_name
+from config import Config, GENRE_MAPPING
 
-# Load environment variables
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
-
-TMDB_API_KEY = os.getenv('TMDB_API_KEY')
-OMDB_API_KEY = os.getenv('OMDB_API_KEY')
-YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
-RT_MIN_SCORE = int(os.getenv('RT_MIN_SCORE', '70'))
-REGION = os.getenv('REGION', 'IT')
-LANGUAGE = os.getenv('LANGUAGE', 'it-IT')
-
-ITEMS_PER_PAGE = 5
-
-# Provider IDs that are free or AVOD (no subscription needed)
-FREE_PROVIDER_IDS = {35, 300, 192, 531, 538, 11, 339, 235}
-
-# Names of known AVOD/free-with-ads platforms that TMDB may misclassify under flatrate
-KNOWN_FREE_BY_NAME = {
-    "youtube free",
-    "pluto tv",
-    "tubi tv",
-    "plex",
-    "rakuten tv",
-    "raiplay",
-    "mediaset infinity free",
-}
-
-# Search URL templates for platforms (text-based deeplinks)
-PLATFORM_SEARCH_URLS = {
-    "Netflix":               "https://www.netflix.com/search?q={title}",
-    "Amazon Prime Video":    "https://www.amazon.it/s?k={title}&i=instant-video",
-    "Disney+":               "https://www.disneyplus.com/search/{title}",
-    "Apple TV+":             "https://tv.apple.com/it/search?term={title}",
-    "NOW TV":                "https://www.nowtv.it/ricerca?q={title}",
-    "Rakuten TV":            "https://www.rakuten.tv/it/search?q={title}",
-    "Mediaset Infinity":     "https://mediasetinfinity.mediaset.it/search/keyword/{title}",
-    "RaiPlay":               "https://www.raiplay.it/ricerca.html#{title}",
-    "Pluto TV":              "https://pluto.tv/it/search?q={title}",
-    "Plex":                  "https://app.plex.tv/desktop/#!/search?query={title}",
-    "MUBI":                  "https://mubi.com/it/search?query={title}",
-    "YouTube":               "https://www.youtube.com/results?search_query={title}",
-    "YouTube Premium":       "https://www.youtube.com/results?search_query={title}",
-    "Paramount+":            "https://www.paramountplus.com/it/search/{title}/",
-    "Infinity Selection Amazon Channel": "https://www.amazon.it/s?k={title}&i=instant-video",
-    "Amazon Prime Video with Ads": "https://www.amazon.it/s?k={title}&i=instant-video",
-}
-
-def build_platform_url(name, title):
-    template = PLATFORM_SEARCH_URLS.get(name)
-    if template:
-        return template.replace("{title}", quote_plus(title))
-    return None
 
 def get_tmdb_total_pages(media_type, genres, providers, min_year=None):
     url = f"https://api.themoviedb.org/3/discover/{media_type}"
     params = {
-        'api_key': TMDB_API_KEY,
-        'language': LANGUAGE,
-        'watch_region': REGION,
+        'api_key': Config.TMDB_API_KEY,
+        'language': Config.LANGUAGE,
+        'watch_region': Config.REGION,
         'with_watch_providers': '|'.join(map(str, providers)) if providers else '',
         'with_genres': '|'.join(map(str, genres)) if genres else '',
         'sort_by': 'popularity.desc', 
@@ -88,9 +37,9 @@ def get_tmdb_total_pages(media_type, genres, providers, min_year=None):
 def search_tmdb(media_type, genres, providers, page=1, min_year=None):
     url = f"https://api.themoviedb.org/3/discover/{media_type}"
     params = {
-        'api_key': TMDB_API_KEY,
-        'language': LANGUAGE,
-        'watch_region': REGION,
+        'api_key': Config.TMDB_API_KEY,
+        'language': Config.LANGUAGE,
+        'watch_region': Config.REGION,
         'with_watch_providers': '|'.join(map(str, providers)) if providers else '',
         'with_genres': '|'.join(map(str, genres)) if genres else '',
         'sort_by': 'popularity.desc',
@@ -107,22 +56,11 @@ def search_tmdb(media_type, genres, providers, page=1, min_year=None):
     response.raise_for_status()
     return response.json().get('results', [])
 
-GENRE_MAPPING = {
-    28: 'Azione', 12: 'Avventura', 16: 'Animazione', 35: 'Commedia', 
-    80: 'Crime', 99: 'Documentario', 18: 'Dramma', 10751: 'Famiglia', 
-    14: 'Fantasy', 36: 'Storia', 27: 'Horror', 10402: 'Musica', 
-    9648: 'Mistero', 10749: 'Romantico', 878: 'Fantascienza', 
-    53: 'Thriller', 10752: 'Guerra', 37: 'Western',
-    10759: 'Azione e Avventura', 10762: 'Kids', 10763: 'News', 
-    10764: 'Reality', 10765: 'Sci-Fi e Fantasy', 10766: 'Soap', 
-    10767: 'Talk', 10768: 'Guerra e Politica'
-}
-
 def get_omdb_ratings(title, year=None):
-    if not OMDB_API_KEY:
+    if not Config.OMDB_API_KEY:
         return {}
     url = "http://www.omdbapi.com/"
-    params = {'apikey': OMDB_API_KEY, 't': title}
+    params = {'apikey': Config.OMDB_API_KEY, 't': title}
     if year:
         params['y'] = year
     try:
@@ -159,7 +97,7 @@ def get_omdb_ratings(title, year=None):
 
 def get_tmdb_details(item_id, media_type):
     url = f"https://api.themoviedb.org/3/{media_type}/{item_id}"
-    params = {'api_key': TMDB_API_KEY, 'language': LANGUAGE, 'append_to_response': 'credits'}
+    params = {'api_key': Config.TMDB_API_KEY, 'language': Config.LANGUAGE, 'append_to_response': 'credits'}
     try:
         response = requests.get(url, params=params)
         if response.status_code == 200:
@@ -170,11 +108,11 @@ def get_tmdb_details(item_id, media_type):
 
 
 def get_youtube_trailer(query):
-    if not YOUTUBE_API_KEY:
+    if not Config.YOUTUBE_API_KEY:
         return None
     url = "https://www.googleapis.com/youtube/v3/search"
     params = {
-        'key': YOUTUBE_API_KEY,
+        'key': Config.YOUTUBE_API_KEY,
         'q': f"{query} trailer ufficiale",
         'part': 'snippet',
         'type': 'video',
@@ -198,38 +136,35 @@ def get_watch_providers(item_id, media_type, title):
     where tier is 'subscription' (flatrate) or 'free' (free + ads).
     """
     url = f"https://api.themoviedb.org/3/{media_type}/{item_id}/watch/providers"
-    params = {'api_key': TMDB_API_KEY}
+    params = {'api_key': Config.TMDB_API_KEY}
     try:
         response = requests.get(url, params=params)
         if response.status_code == 200:
             data = response.json().get('results', {})
-            it_data = data.get(REGION, {})
+            it_data = data.get(Config.REGION, {})
             platforms = []
             seen = set()
 
-            # Subscription (flatrate) — but some AVOD platforms land here too
+            # Subscription tier (flatrate)
             for p in it_data.get('flatrate', []):
-                name = p['provider_name']
+                name = normalize_provider_name(p['provider_name'])
                 if name not in seen:
                     seen.add(name)
-                    tier = 'free' if name.lower() in KNOWN_FREE_BY_NAME else 'subscription'
-                    platforms.append({
-                        'name': name,
-                        'url': build_platform_url(name, title),
-                        'tier': tier
-                    })
+                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'subscription'})
 
-            # Free (free + ads → treated as same "free" category)
-            for tier_key in ('free', 'ads'):
-                for p in it_data.get(tier_key, []):
-                    name = p['provider_name']
-                    if name not in seen:
-                        seen.add(name)
-                        platforms.append({
-                            'name': name,
-                            'url': build_platform_url(name, title),
-                            'tier': 'free'
-                        })
+            # Free tier (no ads)
+            for p in it_data.get('free', []):
+                name = normalize_provider_name(p['provider_name'])
+                if name not in seen:
+                    seen.add(name)
+                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'free'})
+
+            # Free with ads tier
+            for p in it_data.get('ads', []):
+                name = normalize_provider_name(p['provider_name'])
+                if name not in seen:
+                    seen.add(name)
+                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'ads'})
 
             return platforms
     except Exception:
@@ -251,6 +186,7 @@ def main():
     platforms = prefs.get('platforms', [])
     include_watched = prefs.get('include_watched', False)
     min_year = prefs.get('min_year')
+    ITEMS_PER_PAGE = prefs.get('max_results', 5)
     
     # Establish Random Generator
     rng = random.Random(args.seed if args.seed is not None else 42)

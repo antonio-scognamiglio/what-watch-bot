@@ -8,6 +8,7 @@ def main():
     parser.add_argument("--set-platforms", type=str, help="Comma-separated list of platform IDs")
     parser.add_argument("--set-include-watched", type=str, help="Set include_watched preference (true/false)")
     parser.add_argument("--set-min-year", type=str, help="Set minimum release year (e.g., 2010), or pass 'none' to clear")
+    parser.add_argument("--set-max-results", type=str, help="Set max items per search page (integer between 1 and 20)")
     parser.add_argument("--view", action="store_true", help="View current preferences")
     args = parser.parse_args()
 
@@ -58,7 +59,22 @@ def main():
             except ValueError:
                 print(json.dumps({"success": False, "error": "Invalid min_year format. Must be integer or 'none'."}))
 
-    if args.view or (not args.set_genres and not args.set_platforms and args.set_include_watched is None and args.set_min_year is None):
+    if args.set_max_results is not None:
+        try:
+            max_res = int(args.set_max_results)
+            if 1 <= max_res <= 20:
+                cursor.execute(
+                    "INSERT OR REPLACE INTO prefs (key, value) VALUES (?, ?)",
+                    ('max_results', json.dumps(max_res))
+                )
+                conn.commit()
+                print(json.dumps({"success": True, "message": "max_results updated", "max_results": max_res}))
+            else:
+                print(json.dumps({"success": False, "error": "max_results must be between 1 and 20."}))
+        except ValueError:
+            print(json.dumps({"success": False, "error": "Invalid max_results format. Must be an integer."}))
+
+    if args.view or (not args.set_genres and not args.set_platforms and args.set_include_watched is None and args.set_min_year is None and args.set_max_results is None):
         prefs = db_helper.get_prefs(conn)
         print(json.dumps(prefs, indent=2, ensure_ascii=False))
 
