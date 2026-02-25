@@ -4,6 +4,8 @@
 
 WhatWatchBot is a powerful Telegram bot designed to help you discover, explore, and find where to stream your next favorite movie or TV series.
 
+> **Architectural Note:** This repository is structured as an **OpenClaw Workspace**. It contains the core configuration for an OpenClaw Agent (`SOUL.md`, `IDENTITY.md`) and a self-contained Python **Skill** located in `skills/what-watch-bot/` which provides the actual movie and TV series recommendation capabilities.
+
 Powered by **OpenClaw** and integrated with various external APIs (TMDB, OMDB, YouTube, Wikipedia), WhatWatchBot understands natural language queries, fetches detailed media information (including ratings and trailers), and guides you directly to the streaming platforms available in your region.
 
 ## What it does
@@ -55,7 +57,7 @@ docker compose up -d
 _Note: This automatically uses `docker-compose.override.yml` behind the scenes to enable hot-reloading (Bind Mounts) and creates a local `./db` folder for your SQLite database._
 
 **For Production Deployment:**
-When deploying to a server, you must explicitly use the production configuration to ensure the code is sealed within the image and data is kept safe in Named Volumes:
+When deploying to a server, you must explicitly use the production configuration to ensure the code is sealed within the image and your local SQLite database is kept safe in a Named Volume:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
@@ -64,61 +66,64 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 Both scenarios will automatically **build** a local Docker image from the included `Dockerfile` (which pre-installs all required Python dependencies) and start the service.
 
 > [!NOTE]
-> The first `docker compose up -d` takes slightly longer because it builds the image. Subsequent runs are instant. If you pull an update and want to rebuild the image, run `docker compose up -d --build`.
+> If you pull an update and want to rebuild the image, run `docker compose up -d --build`.
 
-### 4. Restore Agent Skills
+### 4. Restore Development Tools (IDE Skills)
 
-This project uses agent skills tracked via `skills-lock.json`. To restore them after cloning:
+This project uses Antigravity Agent abilities (workflows, testing patterns) tracked via `skills-lock.json` to help you develop the codebase inside your IDE.
+_(Note: These are tools for the developer's AI assistant, NOT the runtime skills injected into the WhatWatchBot)._
+
+To restore them after cloning:
 
 ```bash
 npx skills experimental_install
 ```
 
-> [!NOTE]
-> If you create a custom skill in this folder, it will not be committed. Skills installed from the official registry are not committed and must be restored with the command above.
-
 ### 5. ⚠️ CRITICAL: OpenClaw Onboarding & Setup
 
-Once the container is running, **you must onboard your own Telegram bot into OpenClaw**.
+> **CLI Command Preface:** Whenever the official OpenClaw documentation says to run an `openclaw` command, you must execute it _inside_ the container if you are using Docker. For the rest of this guide, the local equivalent of the native `openclaw` CLI command is:
+> `docker exec -it what-watch-openclaw node dist/index.js`
 
-> **Note:** You cannot use the original WhatWatchBot Telegram account. You need to create your own!
->
-> 1. Go to Telegram and message [@BotFather](https://t.me/BotFather).
-> 2. Send the command `/newbot`, choose a name and a username for your bot.
-> 3. Save the **HTTP API Token** provided by BotFather. You will need it in the next step!
-> 4. **Important**: Send `/setcommands` to BotFather, select your bot, and paste the list of commands found in the `BOT_COMMANDS.md` file. This is crucial for the bot to show the interactive menu.
+Once the container is running, you must configure your OpenClaw agent and connect it to a messaging platform. WhatWatchBot can technically be connected to any platform supported by OpenClaw, but it has been tested for **Telegram**.
 
-DO NOT manually edit Telegram keys or sessions. It's highly recommended to use the internal setup process:
+The OpenClaw setup wizard is generally fully guided. If you choose to use Telegram, you can follow the prerequisite steps below to prepare your bot, but always refer to the [official OpenClaw Channels documentation](https://docs.openclaw.ai/channels) as procedures might change in the future.
 
-1. Open your terminal and connect to the running container:
+**Prerequisite (If using Telegram):**
+
+1. Go to Telegram and message [@BotFather](https://t.me/BotFather).
+2. Send the command `/newbot`, choose a name and a username for your bot.
+3. Save the **HTTP API Token** provided by BotFather.
+4. **Important**: Send `/setcommands` to BotFather, select your bot, and paste the list of commands found in the `BOT_COMMANDS.md` file so users see the interactive menu.
+
+5. Open your terminal and run the onboarding command:
+
    ```bash
-   docker exec -it what-watch-openclaw bash
-   ```
-2. Run the onboarding command:
-
-   ```bash
-   node dist/index.js onboard
+   docker exec -it what-watch-openclaw node dist/index.js onboard
    ```
 
    _Follow the interactive prompt. When asked, paste the Telegram Token you just got from BotFather and select the `what-watch-bot` skill._
 
-3. Ensure the `what-watch-bot` skill is properly registered in OpenClaw. OpenClaw needs to know this folder contains a skill.
+6. **During the Onboarding Wizard:**
+   The wizard will ask you a series of questions to configure the agent. Here are some guidelines:
+   - **Security Warning:** Please read the security warning carefully and accept it if you agree to proceed.
+   - **Onboarding mode:** `QuickStart` is recommended.
+   - **Config handling:** If the wizard says "Existing config detected", select `Update values` to proceed.
+   - **Model provider:** Choose your preferred AI model. You do not need a heavy or expensive model; a fast model like Google `gemini-3-flash` works perfectly for this bot.
+   - **Target channel:** Choose the platform you want the bot on (e.g., `Telegram (Bot API)`). You will be asked to insert the Bot Token here.
+   - **Hooks:** I recommend selecting `session-memory` and `command-logger`. You do not need `boot-md` as the bot identity is natively configured.
+   - **Hatch your bot:** You can select `Do this later`.
 
-   **During the Onboarding Wizard:**
-   - Security Warning: type `y` (Yes)
-   - Onboarding mode: choose `QuickStart`
-   - Config handling: choose `Use existing values` (or `Update values` to review)
-   - Model provider: choose your preferred model (e.g., Google `gemini-3-flash`)
-   - **Hooks (CRITICAL):** Use the Spacebar to enable the following 4 hooks before pressing Enter:
-     - `[x] boot-md` (CRITICAL: Loads the SKILL.md identity immediately)
-     - `[x] bootstrap-extra-files` (Links your project's scripts to the agent)
-     - `[x] command-logger` (For debugging and terminal logs)
-     - `[x] session-memory` (For context retention and chat history)
-   - When asked "How do you want to hatch your bot?", choose `Do this later`.
+> [!TIP]
+> **Wizard Timeouts & Manual Pairing:**
+>
+> - If the wizard crashes, times out, or you exit unexpectedly, simply run the `onboard` command again to restart the setup process.
+> - The wizard usually handles device pairing for you. However, if it fails or if the bot asks you for a pairing code on Telegram (e.g., `A1B2C3D4`), you must approve the device manually using the pairing command.
+>   - Example: `docker exec -it what-watch-openclaw node dist/index.js pairing approve telegram <YOUR_CODE>`
+>   - For more details, refer to the [official OpenClaw Pairing Docs](https://docs.openclaw.ai/channels/pairing).
 
 > [!CAUTION]
 > **Web UI Access via Docker:**
-> At the end of the wizard, OpenClaw will output a Web UI URL containing an internal Docker IP (e.g., `http://172.x.x.x:18789/`). **This link will not work directly on your Mac.**
+> At the end of the wizard, OpenClaw will output a Web UI URL for the dashboard. **If it shows an internal Docker IP (e.g., `http://172.x.x.x:18789/`), this link will not work directly on your Mac.**
 > To access the dashboard, you must replace the IP with `localhost`:
 > 👉 `http://localhost:18789/`
 >
@@ -126,22 +131,22 @@ DO NOT manually edit Telegram keys or sessions. It's highly recommended to use t
 
 ## 📁 Project Structure
 
-The project is organized as follows:
+This repository uses the official **OpenClaw Workspace Paradigm**. The root directory configures the Agent, while the Python code is contained within a specific Skill folder.
 
-- **`src/`**: Contains the core logic and integrations.
-  - `api/`: API modules (`tmdb.py`, `omdb.py`, `youtube.py`, `wikipedia.py`).
-  - `utils/`: Utilities for formatting messages (`formatters.py`), handling pagination (`pagination.py`), and platform mapping (`platforms.py`).
-  - `database.py`: SQLite logic for tracking watched movies and user preferences.
-  - `config.py`: Centralized configuration mapping the `.env` file constants.
-- **`scripts/`**: Lightweight CLI entrypoints that OpenClaw calls when triggering the bot's abilities (e.g., `search.py`, `search_title.py`, `fetch_plot.py`).
-- **`SKILL.md`**: The brain of the bot. This file defines the agent's instructions, prompts, and how it maps natural language to the internal `scripts/`.
-- **`docker-compose.yml`**: The Docker configuration to run the OpenClaw host.
+- **`IDENTITY.md`** & **`SOUL.md`**: Define the agent's core character, base instructions, tone, and language mapping.
+- **`skills/what-watch-bot/`**: The standalone technical skill providing the bot's abilities.
+  - `src/`: Core logic and API integrations (`tmdb.py`, `omdb.py`, `database.py`, etc.).
+  - `scripts/`: CLI entrypoints used by OpenClaw to trigger the bot's abilities.
+  - `tests/`: Unit tests isolating and verifying the Python logic independent of the Agent.
+  - `SKILL.md`: The technical manual mapping slash commands to Python scripts.
+- **`docker-compose.yml`**: Docker configuration defining the Gateway architecture.
+- **`db/`**: Local binding for the SQLite database tracking user preferences.
 
 ---
 
 ## 🧪 Testing
 
-This project uses `pytest` for automated testing, ensuring the core logics (pagination, SQLite caching, API fallbacks) are stable without making real network requests.
+This project uses `pytest` for automated testing, ensuring the core logics (pagination, SQLite caching, API fallbacks) are stable without making real network requests. Tests are isolated within the skill folder.
 
 To run the test suite and check code coverage:
 
@@ -150,5 +155,6 @@ To run the test suite and check code coverage:
 pip install -r requirements.txt
 
 # 2. Run the full test suite
-pytest tests/ -v --cov=src --cov-report=term-missing
+cd skills/what-watch-bot
+PYTHONPATH=. pytest tests/ -v --cov=src --cov-report=term-missing
 ```
