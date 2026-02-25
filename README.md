@@ -142,6 +142,23 @@ This repository uses the official **OpenClaw Workspace Paradigm**. The root dire
 - **`docker-compose.yml`**: Docker configuration defining the Gateway architecture.
 - **`db/`**: Local binding for the SQLite database tracking user preferences.
 
+## 🛠️ Development Workflow: Applying Changes
+
+Since this project follows a strict container isolation pattern (no Workspace bind mounts), changes to the **Bot Core Logic** are not reflected in real-time within the running container.
+
+"Bot Core Logic" refers to the files that define the bot's behavior and abilities:
+
+- **`SOUL.md`**: Core instructions and persona.
+- **`IDENTITY.md`**: Bot branding and identity.
+- **`skills/what-watch-bot/SKILL.md`**: Slash command mapping and technical manual.
+
+To apply changes made to these files, you must rebuild the Docker image:
+
+```bash
+# Rebuild the image and restart the container in the background
+docker compose up -d --build
+```
+
 ---
 
 ## 🧪 Testing
