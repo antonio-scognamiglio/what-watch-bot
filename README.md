@@ -159,6 +159,9 @@ To apply changes made to these files, you must rebuild the Docker image:
 docker compose up -d --build
 ```
 
+> [!IMPORTANT]
+> **Sync Bot Commands:** After a rebuild, you should re-synchronize the bot commands with Telegram. Use the `/setcommands` command in [@BotFather](https://t.me/BotFather) and paste the list from [BOT_COMMANDS.md](./BOT_COMMANDS.md).
+
 ---
 
 ## 🧪 Testing
