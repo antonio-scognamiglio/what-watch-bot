@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Architecture & Code Organization Rules
 
 - **Separation of Concerns**: You MUST strictly categorize all logic into three directories:

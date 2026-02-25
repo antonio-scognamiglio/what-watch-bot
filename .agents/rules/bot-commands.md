@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Bot Commands & Wizard Rules
 
 - **Sync Bot Commands**: Whenever you modify, add, or delete a user-facing trigger command in the `SKILL.md` file (the OpenClaw agent wizard), you MUST immediately synchronize the change in `BOT_COMMANDS.md`.
