@@ -1,6 +1,5 @@
 ---
 trigger: always_on
-name: Meta Rules
 description: Defines the protocol for creating, updating, and interacting with rules, skills, and workflows. MUST read before acting on any structural or behavioral requests.
 ---
 
@@ -49,8 +48,8 @@ Workflows are structured sequences of steps for repeatable multi-step procedures
 
 Skills extend the agent's capabilities by integrating knowledge, scripts, and best practices for a specific task.
 
-- **Workspace skills**: `<workspace-root>/.agents/skills/<skill-folder>/SKILL.md`
-- **Global skills**: `~/.gemini/antigravity/skills/<skill-folder>/SKILL.md`
+- **Workspace skills**: `.agents/skills/<skill-folder>/SKILL.md` — loaded automatically
+- **Global skills**: `~/.gemini/antigravity/skills/<skill-folder>/SKILL.md` — available but not auto-loaded
 
 **Anatomy**: Skills are capabilities that the agent decides to use based on their description. For the technical structure (YAML frontmatter, `scripts/` folders, etc.), rely entirely on the `skill-creator` tool or consult existing skills as templates.
 
@@ -78,11 +77,10 @@ Create a **Skill** when:
 
 **Bootstrap Protocol (How to add capabilities):**
 
-1. **Mandatory Global Check**: Whenever the user asks you to perform a task (e.g. brainstorming, debugging, planning, writing), you MUST proactively check `~/.agents/skills/` and `~/.gemini/antigravity/skills/` using your file reading tools to see if a relevant official skill exists. Do this BEFORE executing the task, even if you feel capable of doing it natively.
-2. **Always Search First**: Before creating a custom skill, you MUST use `npx skills find <query>` (via the `find-skills` local tool) to check if an official skill exists.
-3. **Install Locally**: If a relevant skill exists globally or remotely, install it locally in the project (`npx skills add <skill-name>`) so the repo remains portable and does not pollute the user's global environment.
-4. **Scaffold if Missing**: If no skill exists and you MUST create a new one, do NOT create files manually. Use `npx skills init <skill-name>` (via the `skill-creator` tool).
-5. **Self-Healing**: If you need `skill-creator` but it's missing, use `find-skills` to install `skill-creator` locally first, then proceed.
+1. **Always Search First**: Before creating a custom skill, you MUST use `npx skills find <query>` (via the `find-skills` local tool) to check if an official skill exists.
+2. **Install Locally**: If a relevant skill exists, install it locally in the project (`npx skills add <skill-name>`) so the repo remains portable.
+3. **Scaffold if Missing**: If no skill exists and you MUST create a new one, do NOT create files manually. Use `npx skills init <skill-name>` (via the `skill-creator` tool).
+4. **Self-Healing**: If you need `skill-creator` but it's missing, use `find-skills` to install `skill-creator` locally first, then proceed.
 
 ## When to Update an Existing Rule or Skill
 

@@ -54,7 +54,18 @@ This will automatically **build** a local Docker image from the included `Docker
 > [!NOTE]
 > The first `docker compose up -d` takes slightly longer because it builds the image. Subsequent runs are instant. If you pull an update and want to rebuild the image, run `docker compose up -d --build`.
 
-### 4. ⚠️ CRITICAL: OpenClaw Onboarding & Setup
+### 4. Restore Agent Skills
+
+This project uses agent skills tracked via `skills-lock.json`. To restore them after cloning:
+
+```bash
+npx skills experimental_install
+```
+
+> [!NOTE]
+> If you create a custom skill in this folder, it will not be committed. Skills installed from the official registry are not committed and must be restored with the command above.
+
+### 5. ⚠️ CRITICAL: OpenClaw Onboarding & Setup
 
 Once the container is running, **you must onboard your own Telegram bot into OpenClaw**.
 

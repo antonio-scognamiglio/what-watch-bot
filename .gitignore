@@ -27,3 +27,7 @@ openclaw-data/
 htmlcov/
 coverage.xml
 .pytest_cache/
+
+# Agent skills 
+.agents/skills/
+
