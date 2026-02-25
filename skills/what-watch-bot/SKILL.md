@@ -359,36 +359,36 @@ Strict format for a single card:
 [🎬]([poster_url]) **[Title] ([Year])**
 
 [IF TYPE IN JSON IS MOVIE:]
-Type: Movie
+[Label for Type]: [Translated word for Movie]
 [IF TYPE IS TV:]
-Type: TV Series
+[Label for Type]: [Translated word for TV Series]
 
-🏷️ **Genres:** [List of genres separated by commas. Those also in "matched_genres" go in **BOLD**!]
+🏷️ **[Label for Genres]:** [List of genres separated by commas. Those also in "matched_genres" go in **BOLD**!]
 ⚠️ Genre names MUST be displayed in the user's language (translate from the internal English GENRE_MAPPING).
 
-📖 **Plot:**
+📖 **[Label for Plot]:**
 [If the plot in the JSON is very long, summarise it concisely (max 4-5 lines), without cutting it mid-sentence.
 ⚠️ **MISSING PLOT:** If `overview` in the JSON is empty or missing, BEFORE responding run: `python3 {baseDir}/scripts/fetch_plot.py "Title Name"`. This script searches OMDb and Wikipedia for a plot. Check the `"source"` field in the output: if it ends in `_en` (e.g., `"omdb_en"` or `"wikipedia_en"`) AND the user's language is NOT English, translate the plot to the user's language before inserting it here. If the script also fails, write "Plot not available."]
 
-🎬 **Director(s):** [List of directors]
+🎬 **[Label for Director(s)]:** [List of directors]
 
-🎭 **Main Cast:** [List of cast members]
+🎭 **[Label for Main Cast]:** [List of cast members]
 
-📊 **Ratings:**
+📊 **[Label for Ratings]:**
 (Only show ratings that are actually present. Round decimal values to 1 decimal place. If a rating is missing, omit it.)
 🍅 Tomatometer: [X]%
 Ⓜ️ Metacritic: [X]/100
 ⭐ IMDb: [X]/10
 🔵 TMDB: [X]/10
 
-📺 **Available on:**
+📺 **[Label for Available on]:**
 [The JSON `platforms` is a list of objects `{name, url, tier}`. For each platform, format as:
 - tier `subscription`: 💳 [PlatformName](url)
 - tier `free`: 🆓 [PlatformName](url)
 - tier `ads`: 📢 [PlatformName](url)
 - If url is null: show emoji + name only, no link
 - One line per platform]
-  ▶️ [Watch the trailer on YouTube](trailer_url)
+  ▶️ [Translated phrase for "Watch the trailer on YouTube"](trailer_url)
 
 [IF `is_watched` IS TRUE:]
 🟢 You've already seen this 👉 /remove_[id] to mark as unwatched
