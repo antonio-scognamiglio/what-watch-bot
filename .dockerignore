@@ -12,15 +12,17 @@ node_modules/
 package-lock.json
 
 # Tests and Coverage
+skills/what-watch-bot/tests/
+skills/what-watch-bot/.pytest_cache/
 tests/
 .coverage
 .coverage.*
 htmlcov/
 coverage.xml
 .pytest_cache/
-tests/
 __pycache__/
 *.pyc
+skills/what-watch-bot/__pycache__/
 
 # Virtual Environment
 venv/
@@ -41,4 +43,3 @@ db/
 # Documentation
 README.md
 BOT_COMMANDS.md
-BOOTSTRAP.md

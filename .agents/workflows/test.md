@@ -9,7 +9,7 @@ This workflow must be executed to verify that the code works correctly and no re
 1. **Run all tests**
    // turbo
    Execute the full test suite using pytest.
-   `pytest tests/`
+   `cd skills/what-watch-bot && PYTHONPATH=. pytest tests/`
 
 2. **Analyze results**
    If all tests pass successfully, you may proceed to the next step.
@@ -22,4 +22,4 @@ This workflow must be executed to verify that the code works correctly and no re
 3. **Check test coverage (Highly Recommended)**
    // turbo
    Verify that the code coverage is adequate, especially for newly added features.
-   `pytest --cov=src tests/`
+   `cd skills/what-watch-bot && PYTHONPATH=. pytest --cov=src tests/`

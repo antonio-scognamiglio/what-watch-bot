@@ -1,8 +1,11 @@
 import os
 from dotenv import load_dotenv
 
+# The workspace root is three directories up: src -> what-watch-bot -> skills -> workspace_root
+WORKSPACE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
 # Load environment variables once for all scripts using Config
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
+load_dotenv(os.path.join(WORKSPACE_ROOT, '.env'), override=True)
 
 class Config:
     # Required API keys — must be set in .env
@@ -12,7 +15,7 @@ class Config:
     # Deployer contact URL (used in Wikipedia User-Agent header per Wikipedia policy)
     CONTACT_URL = os.getenv('CONTACT_URL', '')
     # Path for SQLite Database, defaults to local db/watchbot.db
-    DB_PATH = os.getenv('DB_PATH', os.path.join(os.path.dirname(__file__), '..', 'db', 'watchbot.db'))
+    DB_PATH = os.getenv('DB_PATH', os.path.join(WORKSPACE_ROOT, 'db', 'watchbot.db'))
 
 GENRE_MAPPING = {
     28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
