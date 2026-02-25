@@ -109,11 +109,11 @@ DO NOT manually edit Telegram keys or sessions. It's highly recommended to use t
    - Onboarding mode: choose `QuickStart`
    - Config handling: choose `Use existing values` (or `Update values` to review)
    - Model provider: choose your preferred model (e.g., Google `gemini-3-flash`)
-   - **Hooks (CRITICAL):** Use the Spacebar to enable the following 3 hooks before pressing Enter:
-     - `[x] bootstrap-extra-files` (Needed to load your SKILL.md identity)
+   - **Hooks (CRITICAL):** Use the Spacebar to enable the following 4 hooks before pressing Enter:
+     - `[x] boot-md` (CRITICAL: Loads the SKILL.md identity immediately)
+     - `[x] bootstrap-extra-files` (Links your project's scripts to the agent)
      - `[x] command-logger` (For debugging and terminal logs)
      - `[x] session-memory` (For context retention and chat history)
-     - _(Leave `boot-md` unchecked)_
    - When asked "How do you want to hatch your bot?", choose `Do this later`.
 
 > [!CAUTION]
