@@ -13,7 +13,7 @@ RUN apt-get update -qq && \
 
 # Copy the actual bot code into the image (Required for Production where there is no Bind Mount)
 # We do this as root, then change ownership to node
-COPY . /home/node/.openclaw/workspace/what-watch-bot
+COPY . /home/node/.openclaw/workspace
 RUN chown -R node:node /home/node/.openclaw
 
 

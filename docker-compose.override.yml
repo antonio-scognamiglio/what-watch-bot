@@ -6,9 +6,6 @@ services:
       # Secure named volume for OpenClaw's internal data
       - openclaw_data:/home/node/.openclaw
 
-      # Live reload bind mount for the bot's workspace
-      - .:/home/node/.openclaw/workspace/what-watch-bot
-
       # Local bind mount for the SQLite database
       - ./db:/home/node/bot_data
 

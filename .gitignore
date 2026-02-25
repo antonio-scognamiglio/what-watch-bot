@@ -30,3 +30,6 @@ coverage.xml
 
 # Agent skills 
 .agents/skills/
+
+# OpenClaw runtime directory
+.openclaw/
