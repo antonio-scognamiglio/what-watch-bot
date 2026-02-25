@@ -11,5 +11,10 @@ RUN apt-get update -qq && \
     pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements.txt && \
     rm -rf /var/lib/apt/lists/* /tmp/requirements.txt
 
+# Copy the actual bot code into the image (Required for Production where there is no Bind Mount)
+# We do this as root, then change ownership to node
+COPY . /home/node/.openclaw/workspace/what-watch-bot
+RUN chown -R node:node /home/node/.openclaw/workspace/what-watch-bot
+
 # Switch back to the default non-root user
 USER node

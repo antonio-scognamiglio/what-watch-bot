@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+
+# OpenClaw development tools
+.agents/
+skills-lock.json
+
+# Dependencies
+# In case someone runs npm locally
+node_modules/
+package-lock.json
+
+# Tests and Coverage
+tests/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.pytest_cache/
+tests/
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Data
+db/
+*.db
+*.sqlite
+
+# Environment variables
+.env
+
+# MacOS
+.DS_Store
+
+# Documentation
+README.md
+BOT_COMMANDS.md
+BOOTSTRAP.md

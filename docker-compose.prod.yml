@@ -1,0 +1,15 @@
+# Production overrides
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  openclaw-gateway:
+    restart: always
+    volumes:
+      # Secure named volume for OpenClaw's internal data
+      - openclaw_data:/home/node/.openclaw
+
+      # Secure named volume for the bot's SQLite database
+      - bot_database:/home/node/bot_data
+
+volumes:
+  openclaw_data:
+  bot_database:

@@ -4,10 +4,13 @@ import os
 import hashlib
 import time
 from src.utils.logger import get_logger
+from src.config import Config
 
 logger = get_logger(__name__)
 
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'db', 'watchbot.db')
+# Allow overriding the database path via environment variables (via Docker).
+# Fallback to the local workspace 'db' folder if the variable is not set.
+DB_PATH = Config.DB_PATH
 
 CACHE_TTL_SECONDS = 12 * 60 * 60  # 12 hours
 

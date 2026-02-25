@@ -11,6 +11,8 @@ class Config:
     YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
     # Deployer contact URL (used in Wikipedia User-Agent header per Wikipedia policy)
     CONTACT_URL = os.getenv('CONTACT_URL', '')
+    # Path for SQLite Database, defaults to local db/watchbot.db
+    DB_PATH = os.getenv('DB_PATH', os.path.join(os.path.dirname(__file__), '..', 'db', 'watchbot.db'))
 
 GENRE_MAPPING = {
     28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',

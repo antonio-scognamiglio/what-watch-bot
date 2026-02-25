@@ -43,13 +43,25 @@ nano .env
 
 ### 3. Running the Project
 
+The project is structured with separate Docker Compose files for Development and Production to ensure data safety and best practices.
+
+**For Local Development (Default):**
 Start the Docker container in detached mode:
 
 ```bash
 docker compose up -d
 ```
 
-This will automatically **build** a local Docker image from the included `Dockerfile` (which pre-installs all required Python dependencies) and start the service. A Docker named volume is created automatically to persist your configuration, session data, and cache.
+_Note: This automatically uses `docker-compose.override.yml` behind the scenes to enable hot-reloading (Bind Mounts) and creates a local `./db` folder for your SQLite database._
+
+**For Production Deployment:**
+When deploying to a server, you must explicitly use the production configuration to ensure the code is sealed within the image and data is kept safe in Named Volumes:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Both scenarios will automatically **build** a local Docker image from the included `Dockerfile` (which pre-installs all required Python dependencies) and start the service.
 
 > [!NOTE]
 > The first `docker compose up -d` takes slightly longer because it builds the image. Subsequent runs are instant. If you pull an update and want to rebuild the image, run `docker compose up -d --build`.
@@ -92,7 +104,25 @@ DO NOT manually edit Telegram keys or sessions. It's highly recommended to use t
 
 3. Ensure the `what-watch-bot` skill is properly registered in OpenClaw. OpenClaw needs to know this folder contains a skill.
 
----
+   **During the Onboarding Wizard:**
+   - Security Warning: type `y` (Yes)
+   - Onboarding mode: choose `QuickStart`
+   - Config handling: choose `Use existing values` (or `Update values` to review)
+   - Model provider: choose your preferred model (e.g., Google `gemini-3-flash`)
+   - **Hooks (CRITICAL):** Use the Spacebar to enable the following 3 hooks before pressing Enter:
+     - `[x] bootstrap-extra-files` (Needed to load your SKILL.md identity)
+     - `[x] command-logger` (For debugging and terminal logs)
+     - `[x] session-memory` (For context retention and chat history)
+     - _(Leave `boot-md` unchecked)_
+   - When asked "How do you want to hatch your bot?", choose `Do this later`.
+
+> [!CAUTION]
+> **Web UI Access via Docker:**
+> At the end of the wizard, OpenClaw will output a Web UI URL containing an internal Docker IP (e.g., `http://172.x.x.x:18789/`). **This link will not work directly on your Mac.**
+> To access the dashboard, you must replace the IP with `localhost`:
+> 👉 `http://localhost:18789/`
+>
+> **Browser Compatibility:** The OpenClaw Web UI relies on modern WebSockets and is currently optimized for **Google Chrome**. If it fails to load or connect via Firefox, switch to Chrome.
 
 ## 📁 Project Structure
 
