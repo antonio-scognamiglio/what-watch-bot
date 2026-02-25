@@ -20,20 +20,16 @@ This workflow ensures that all your commits are tested, well-formatted, and comp
 Check the differences to understand exactly what was changed.
 `git diff`
 
-3. **Prepare the Commit Message**
-   Based on the observed modifications, formulate a commit message strictly following the **Conventional Commits** standard (e.g., `feat(api): ...`, `fix(core): ...`, `docs: ...`).
+3. **Group Changes and Prepare Commit Message(s)**
+   Review the changes and group them logically. DO NOT create a single monolithic commit if multiple distinct changes were made (e.g., refactoring logic vs updating docs vs fixing a bug).
+   For each logical group, formulate a commit message strictly following the **Conventional Commits** standard (e.g., `feat(api): ...`, `fix(core): ...`, `docs: ...`).
 
 4. **Request User Approval**
    Show the user:
 
-- The files that will be committed.
-- The proposed commit message.
-  Explicitly ask: "May I proceed with the commit?"
+- The logical groupings of files that will be committed separately.
+- The proposed commit message for each group.
+  Explicitly ask: "May I proceed with these commits?"
 
-5. **Execute the Commit**
-   ONLY AFTER receiving explicit approval from the user in the previous step, proceed to stage the files and create the commit.
-   // turbo
-   `git add .`
-
-// turbo
-`git commit -m "YOUR_APPROVED_MESSAGE_HERE"`
+5. **Execute the Commit(s)**
+   ONLY AFTER receiving explicit approval from the user, proceed to stage and commit each group interactively or one by one. Do not blindly `git add .` if changes should be split.
