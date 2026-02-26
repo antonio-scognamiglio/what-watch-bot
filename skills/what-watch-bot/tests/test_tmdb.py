@@ -24,6 +24,15 @@ def test_get_tmdb_total_pages_success(mocker, mock_tmdb_config):
     args, kwargs = mock_get.call_args
     assert kwargs['params']['with_genres'] == '28'
     assert kwargs['params']['primary_release_date.gte'] == '2020-01-01'
+    assert kwargs['params']['with_watch_monetization_types'] == 'flatrate|free|ads'
+    
+def test_get_tmdb_total_pages_rent_buy(mocker, mock_tmdb_config):
+    mock_get = mocker.patch('src.api.tmdb.requests.get')
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {'total_pages': 5}
+    
+    get_tmdb_total_pages('movie', genres=[28], providers=[8], rent_buy=True)
+    assert mock_get.call_args[1]['params']['with_watch_monetization_types'] == 'flatrate|free|ads|rent|buy'
 
 def test_search_tmdb_success(mocker, mock_tmdb_config):
     mock_get = mocker.patch('src.api.tmdb.requests.get')
@@ -38,6 +47,7 @@ def test_search_tmdb_success(mocker, mock_tmdb_config):
     assert results[0]['id'] == 1
     mock_get.assert_called_once()
     assert mock_get.call_args[1]['params']['page'] == 2
+    assert mock_get.call_args[1]['params']['with_watch_monetization_types'] == 'flatrate|free|ads'
 
 def test_search_tmdb_series_min_year(mocker, mock_tmdb_config):
     mock_get = mocker.patch('src.api.tmdb.requests.get')
@@ -81,7 +91,7 @@ def test_get_watch_providers_success(mocker, mock_tmdb_config):
             'US': {
                 'flatrate': [{'provider_name': 'Netflix'}],
                 'free': [{'provider_name': 'Pluto TV'}],
-                'ads': [{'provider_name': 'Tubi TV'}]
+                'ads': [{'provider_name': 'Plex'}]
             }
         }
     }
@@ -93,8 +103,39 @@ def test_get_watch_providers_success(mocker, mock_tmdb_config):
     assert providers[0]['tier'] == 'subscription'
     assert providers[1]['name'] == 'Pluto TV'
     assert providers[1]['tier'] == 'free'
-    assert providers[2]['name'] == 'Tubi TV'
+    assert providers[2]['name'] == 'Plex'
     assert providers[2]['tier'] == 'ads'
+
+def test_get_watch_providers_rent_buy(mocker, mock_tmdb_config):
+    mock_get = mocker.patch('src.api.tmdb.requests.get')
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {
+        'results': {
+            'US': {
+                'flatrate': [{'provider_name': 'Netflix'}],
+                'rent': [{'provider_name': 'Apple TV+'}],
+                'buy': [{'provider_name': 'Amazon Video'}, {'provider_name': 'Apple TV+'}]
+            }
+        }
+    }
+    
+    # Without rent_buy: only flatrate should be returned
+    prov_no_rent = get_watch_providers(123, 'movie', 'Matrix', region='US', rent_buy=False)
+    assert len(prov_no_rent) == 1
+    assert prov_no_rent[0]['name'] == 'Netflix'
+    
+    # With rent_buy: should process rent/buy and deduplicate identical names across tiers
+    prov_rent = get_watch_providers(123, 'movie', 'Matrix', region='US', rent_buy=True)
+    assert len(prov_rent) == 3
+    
+    assert prov_rent[0]['name'] == 'Netflix'
+    assert prov_rent[0]['tier'] == 'subscription'
+    
+    assert prov_rent[1]['name'] == 'Apple TV+'
+    assert prov_rent[1]['tier'] == 'rent'
+    
+    assert prov_rent[2]['name'] == 'Amazon Prime Video'
+    assert prov_rent[2]['tier'] == 'buy'
 
 def test_get_watch_providers_deduplication(mocker, mock_tmdb_config):
     mock_get = mocker.patch('src.api.tmdb.requests.get')
@@ -103,8 +144,8 @@ def test_get_watch_providers_deduplication(mocker, mock_tmdb_config):
     mock_get.return_value.json.return_value = {
         'results': {
             'US': {
-                'flatrate': [{'provider_name': 'Hulu'}],
-                'ads': [{'provider_name': 'Hulu'}]
+                'flatrate': [{'provider_name': 'Disney+'}],
+                'ads': [{'provider_name': 'Disney+'}]
             }
         }
     }
@@ -112,7 +153,7 @@ def test_get_watch_providers_deduplication(mocker, mock_tmdb_config):
     providers = get_watch_providers(123, 'movie', 'Matrix', region='US')
     
     assert len(providers) == 1
-    assert providers[0]['name'] == 'Hulu'
+    assert providers[0]['name'] == 'Disney+'
     assert providers[0]['tier'] == 'subscription' # Flatrate gets processed first
 
 def test_get_watch_providers_failure(mocker, mock_tmdb_config):
