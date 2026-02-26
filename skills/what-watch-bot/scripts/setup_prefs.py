@@ -13,6 +13,7 @@ def main():
     parser.add_argument("--set-genres", type=str, help="Comma-separated list of genre IDs")
     parser.add_argument("--set-platforms", type=str, help="Comma-separated list of platform IDs")
     parser.add_argument("--set-include-watched", type=str, help="Set include_watched preference (true/false)")
+    parser.add_argument("--set-rent-buy", type=str, help="Set rent_buy preference (true/false)")
     parser.add_argument("--set-min-year", type=str, help="Set minimum release year (e.g., 2010), or pass 'none' to clear")
     parser.add_argument("--set-max-results", type=str, help="Set max items per search page (integer between 1 and 20)")
     parser.add_argument("--set-language", type=str, help="Set language preference (e.g., en-US, it-IT, fr-FR)")
@@ -50,6 +51,15 @@ def main():
         )
         conn.commit()
         print(json.dumps({"success": True, "message": "include_watched updated", "include_watched": val_bool}))
+
+    if args.set_rent_buy is not None:
+        val_bool = args.set_rent_buy.lower() in ('true', '1', 'yes')
+        cursor.execute(
+            "INSERT OR REPLACE INTO prefs (key, value) VALUES (?, ?)",
+            ('rent_buy', json.dumps(val_bool))
+        )
+        conn.commit()
+        print(json.dumps({"success": True, "message": "rent_buy updated", "rent_buy": val_bool}))
 
     if args.set_min_year is not None:
         if args.set_min_year.lower() == 'none':
@@ -117,7 +127,7 @@ def main():
 
     no_set_args = (
         not args.set_genres and not args.set_platforms and
-        args.set_include_watched is None and args.set_min_year is None and
+        args.set_include_watched is None and args.set_rent_buy is None and args.set_min_year is None and
         args.set_max_results is None and args.set_language is None and
         args.set_region is None and args.set_min_score is None
     )
@@ -128,6 +138,7 @@ def main():
         prefs.setdefault('region', 'US')
         prefs.setdefault('rt_min_score', 70)
         prefs.setdefault('include_watched', False)
+        prefs.setdefault('rent_buy', False)
         print(json.dumps(prefs, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":

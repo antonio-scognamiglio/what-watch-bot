@@ -3,11 +3,11 @@
 services:
   openclaw-gateway:
     volumes:
-      # Secure named volume for OpenClaw's internal data
+      # Secure named volume for OpenClaw's internal data (state, memory, credentials)
       - openclaw_data:/home/node/.openclaw
 
       # Local bind mount for the SQLite database
-      - ./db:/home/node/bot_data
+      - ./db:/home/node/what-watch-db
 
 volumes:
   openclaw_data:

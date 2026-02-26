@@ -1,17 +1,18 @@
 import requests
 from src.config import Config
-from src.utils.platforms import build_platform_url, normalize_provider_name
+from src.utils.platforms import build_platform_url, normalize_provider_name, _PLATFORM_URL_BUILDERS
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-def get_tmdb_total_pages(media_type, genres, providers, min_year=None, language='en-US', region='US'):
+def get_tmdb_total_pages(media_type, genres, providers, rent_buy=False, min_year=None, language='en-US', region='US'):
     url = f"https://api.themoviedb.org/3/discover/{media_type}"
     params = {
         'api_key': Config.TMDB_API_KEY,
         'language': language,
         'watch_region': region,
         'with_watch_providers': '|'.join(map(str, providers)) if providers else '',
+        'with_watch_monetization_types': 'flatrate|free|ads|rent|buy' if rent_buy else 'flatrate|free|ads',
         'with_genres': '|'.join(map(str, genres)) if genres else '',
         'sort_by': 'popularity.desc',
         'page': 1
@@ -31,13 +32,14 @@ def get_tmdb_total_pages(media_type, genres, providers, min_year=None, language=
     logger.info(f"TMDB total pages: {total_pages}")
     return total_pages
 
-def search_tmdb(media_type, genres, providers, page=1, min_year=None, language='en-US', region='US'):
+def search_tmdb(media_type, genres, providers, rent_buy=False, page=1, min_year=None, language='en-US', region='US'):
     url = f"https://api.themoviedb.org/3/discover/{media_type}"
     params = {
         'api_key': Config.TMDB_API_KEY,
         'language': language,
         'watch_region': region,
         'with_watch_providers': '|'.join(map(str, providers)) if providers else '',
+        'with_watch_monetization_types': 'flatrate|free|ads|rent|buy' if rent_buy else 'flatrate|free|ads',
         'with_genres': '|'.join(map(str, genres)) if genres else '',
         'sort_by': 'popularity.desc',
         'page': page
@@ -89,11 +91,11 @@ def search_tmdb_by_title(query, media_type='multi', language='en-US'):
         logger.error(f"Error searching TMDB by title '{query}': {e}")
     return []
 
-def get_watch_providers(item_id, media_type, title, region='US'):
+def get_watch_providers(item_id, media_type, title, region='US', rent_buy=False):
     """
     Fetch streaming providers for a given region from TMDB.
     Returns a unified list (no duplicates),
-    where tier is 'subscription' (flatrate), 'free', or 'ads'.
+    where tier is 'subscription' (flatrate), 'free', 'ads', and conditionally 'rent'/'buy'.
     """
     url = f"https://api.themoviedb.org/3/{media_type}/{item_id}/watch/providers"
     params = {'api_key': Config.TMDB_API_KEY}
@@ -109,23 +111,36 @@ def get_watch_providers(item_id, media_type, title, region='US'):
             # Subscription tier (flatrate)
             for p in region_data.get('flatrate', []):
                 name = normalize_provider_name(p['provider_name'])
-                if name not in seen:
+                if name not in seen and name in _PLATFORM_URL_BUILDERS:
                     seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'subscription'})
+                    platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'subscription'})
 
             # Free tier (no ads)
             for p in region_data.get('free', []):
                 name = normalize_provider_name(p['provider_name'])
-                if name not in seen:
+                if name not in seen and name in _PLATFORM_URL_BUILDERS:
                     seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'free'})
+                    platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'free'})
 
             # Free with ads tier
             for p in region_data.get('ads', []):
                 name = normalize_provider_name(p['provider_name'])
-                if name not in seen:
+                if name not in seen and name in _PLATFORM_URL_BUILDERS:
                     seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(name, title), 'tier': 'ads'})
+                    platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'ads'})
+
+            # Conditional Rent/Buy
+            if rent_buy:
+                for p in region_data.get('rent', []):
+                    name = normalize_provider_name(p['provider_name'])
+                    if name not in seen and name in _PLATFORM_URL_BUILDERS:
+                        seen.add(name)
+                        platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'rent'})
+                for p in region_data.get('buy', []):
+                    name = normalize_provider_name(p['provider_name'])
+                    if name not in seen and name in _PLATFORM_URL_BUILDERS:
+                        seen.add(name)
+                        platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'buy'})
 
             logger.info(f"Found {len(platforms)} providers for {title} in {region}")
             return platforms

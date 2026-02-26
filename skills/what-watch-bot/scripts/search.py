@@ -35,6 +35,7 @@ def main():
         genres = prefs.get('genres', [])
         platforms = prefs.get('platforms', [])
         include_watched = prefs.get('include_watched', False)
+        rent_buy = prefs.get('rent_buy', False)
         min_year = prefs.get('min_year')
         language = prefs.get('language', 'en-US')
         region = prefs.get('region', 'US')
@@ -61,6 +62,7 @@ def main():
             language=language,
             region=region,
             rt_min_score=rt_min_score,
+            rent_buy=rent_buy,
         )
 
         logger.info(f"Cache abstraction returned {len(page_results)} items.")
@@ -68,7 +70,7 @@ def main():
         # Enrich with trailers, platforms, and format output
         logger.info("Building media cards (fetching trailers and providers)...")
         final_output = [
-            build_media_card(item, user_genre_ids=genres, language=language, region=region)
+            build_media_card(item, user_genre_ids=genres, language=language, region=region, rent_buy=rent_buy)
             for item in page_results
         ]
         

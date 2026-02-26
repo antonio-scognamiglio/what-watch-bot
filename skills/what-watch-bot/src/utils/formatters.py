@@ -2,7 +2,7 @@ from src.config import GENRE_MAPPING
 from src.api.tmdb import get_tmdb_details, get_watch_providers
 from src.api.youtube import get_youtube_trailer
 
-def build_media_card(item, omdb_ratings=None, tmdb_rating=None, user_genre_ids=None, language='en-US', region='US'):
+def build_media_card(item, omdb_ratings=None, tmdb_rating=None, user_genre_ids=None, language='en-US', region='US', rent_buy=False):
     """
     Transforms a raw TMDB API item dictionary into the standard JSON
     'card' format expected by the bot instructions.
@@ -39,7 +39,7 @@ def build_media_card(item, omdb_ratings=None, tmdb_rating=None, user_genre_ids=N
     poster_path = item.get('poster_path') or details.get('poster_path')
     poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None
 
-    platform_objects = get_watch_providers(item_id, item_type, title, region)
+    platform_objects = get_watch_providers(item_id, item_type, title, region, rent_buy)
 
     or_ratings = omdb_ratings or item.get('omdb_ratings', {})
     tr_rating = tmdb_rating or item.get('tmdb_rating', round(item.get('vote_average') or 0, 1))

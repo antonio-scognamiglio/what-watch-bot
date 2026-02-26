@@ -7,15 +7,15 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def _build_page_lists(media_type_pref, genres, platforms, min_year, language, region, rng):
+def _build_page_lists(media_type_pref, genres, platforms, min_year, language, region, rng, rent_buy=False):
     """Fetch total TMDB pages and return shuffled lists for movie and tv."""
     logger.info("Building shuffled page lists for new search session")
     movie_pages = (
-        get_tmdb_total_pages('movie', genres, platforms, min_year, language, region)
+        get_tmdb_total_pages('movie', genres, platforms, rent_buy, min_year, language, region)
         if media_type_pref in ('movie', 'both') else 0
     )
     tv_pages = (
-        get_tmdb_total_pages('tv', genres, platforms, min_year, language, region)
+        get_tmdb_total_pages('tv', genres, platforms, rent_buy, min_year, language, region)
         if media_type_pref in ('tv', 'both') else 0
     )
     movie_list = list(range(1, min(movie_pages, 500) + 1))
@@ -28,7 +28,7 @@ def _build_page_lists(media_type_pref, genres, platforms, min_year, language, re
 
 def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, region,
                       watched_ids, include_watched, rt_min_score,
-                      tmdb_pages_movie, tmdb_pages_tv, rng, target_count, current_pool):
+                      tmdb_pages_movie, tmdb_pages_tv, rng, target_count, current_pool, rent_buy=False):
     """
     Continue fetching from TMDB (using the remaining page queues) until
     current_pool has at least target_count items, or TMDB is exhausted.
@@ -48,7 +48,7 @@ def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, re
         if media_type_pref in ('movie', 'both') and tmdb_pages_movie:
             page = tmdb_pages_movie.pop(0)
             logger.info(f"Fetching TMDB movie page {page} cache list remaining: {len(tmdb_pages_movie)}")
-            movies = search_tmdb('movie', genres, platforms, page, min_year, language, region)
+            movies = search_tmdb('movie', genres, platforms, rent_buy, page, min_year, language, region)
             for m in movies:
                 m['media_type'] = 'movie'
 
@@ -56,7 +56,7 @@ def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, re
         if media_type_pref in ('tv', 'both') and tmdb_pages_tv:
             page = tmdb_pages_tv.pop(0)
             logger.info(f"Fetching TMDB tv page {page} cache list remaining: {len(tmdb_pages_tv)}")
-            shows = search_tmdb('tv', genres, platforms, page, min_year, language, region)
+            shows = search_tmdb('tv', genres, platforms, rent_buy, page, min_year, language, region)
             for s in shows:
                 s['media_type'] = 'tv'
 
@@ -109,7 +109,7 @@ def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, re
 
 def fetch_page_from_cache(conn, cache_key, items_per_page, seed, media_type_pref,
                           genres, platforms, min_year, watched_ids, include_watched,
-                          language, region, rt_min_score):
+                          language, region, rt_min_score, rent_buy=False):
     """
     Main entry point for cached pagination.
 
@@ -125,7 +125,7 @@ def fetch_page_from_cache(conn, cache_key, items_per_page, seed, media_type_pref
         logger.info("Cache MISS / Expired. Initializing cold start.")
         # Cold start — build the shuffled TMDB page lists
         movie_list, tv_list = _build_page_lists(
-            media_type_pref, genres, platforms, min_year, language, region, rng
+            media_type_pref, genres, platforms, min_year, language, region, rng, rent_buy
         )
         pool = []
         exhausted = False
@@ -147,7 +147,7 @@ def fetch_page_from_cache(conn, cache_key, items_per_page, seed, media_type_pref
         pool, movie_list, tv_list, exhausted = _fetch_and_filter(
             media_type_pref, genres, platforms, min_year, language, region,
             watched_ids, include_watched, rt_min_score,
-            movie_list, tv_list, rng, items_per_page, pool
+            movie_list, tv_list, rng, items_per_page, pool, rent_buy
         )
     elif len(pool) >= items_per_page:
         logger.info(f"Pool has sufficient items ({len(pool)} >= {items_per_page}). No fetch needed.")
@@ -167,16 +167,16 @@ def fetch_page_from_cache(conn, cache_key, items_per_page, seed, media_type_pref
 # ── Legacy helper kept for backward compatibility (not used by search.py anymore) ───────
 def fetch_shuffled_page(rng, requested_page, items_per_page, media_type_pref,
                         genres, platforms, min_year, watched_ids, include_watched,
-                        language='en-US', region='US', rt_min_score=70):
+                        language='en-US', region='US', rt_min_score=70, rent_buy=False):
     """Stateless fallback (no cache). Used by tests or direct calls."""
     movie_list, tv_list = _build_page_lists(
-        media_type_pref, genres, platforms, min_year, language, region, rng
+        media_type_pref, genres, platforms, min_year, language, region, rng, rent_buy
     )
     target_count = requested_page * items_per_page
     pool, _, _, _ = _fetch_and_filter(
         media_type_pref, genres, platforms, min_year, language, region,
         watched_ids, include_watched, rt_min_score,
-        movie_list, tv_list, rng, target_count, []
+        movie_list, tv_list, rng, target_count, [], rent_buy
     )
     start = (requested_page - 1) * items_per_page
     return pool[start:start + items_per_page]

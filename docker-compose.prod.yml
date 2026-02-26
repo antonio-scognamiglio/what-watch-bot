@@ -4,12 +4,12 @@ services:
   openclaw-gateway:
     restart: always
     volumes:
-      # Secure named volume for OpenClaw's internal data
+      # Secure named volume for OpenClaw's internal data (state, memory, credentials)
       - openclaw_data:/home/node/.openclaw
 
       # Secure named volume for the bot's SQLite database
-      - bot_database:/home/node/bot_data
+      - what_watch_db:/home/node/what-watch-db
 
 volumes:
   openclaw_data:
-  bot_database:
+  what_watch_db:

@@ -90,6 +90,7 @@ def make_cache_key(seed: int, media_type: str, prefs: dict) -> str:
         'rt_min_score': prefs.get('rt_min_score', 70),
         'min_year': prefs.get('min_year'),
         'include_watched': prefs.get('include_watched', False),
+        'rent_buy': prefs.get('rent_buy', False),
     }
     raw = json.dumps(relevant, sort_keys=True)
     return hashlib.md5(raw.encode()).hexdigest()

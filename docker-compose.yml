@@ -5,7 +5,7 @@ services:
     environment:
       HOME: /home/node
       TERM: xterm-256color
-      DB_PATH: /home/node/bot_data/watchbot.db
+      DB_PATH: /home/node/what-watch-db/watchbot.db
     env_file:
       - .env
     ports:
@@ -15,10 +15,7 @@ services:
     restart: unless-stopped
     command:
       [
-        "node",
-        "dist/index.js",
-        "gateway",
-        "--port",
-        "18789",
-        "--allow-unconfigured",
+        "sh",
+        "-c",
+        "mkdir -p /home/node/.openclaw && ln -sfn /home/node/what-watch-bot /home/node/.openclaw/workspace && node dist/index.js gateway --port 18789 --allow-unconfigured",
       ]
