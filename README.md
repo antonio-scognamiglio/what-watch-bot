@@ -15,6 +15,8 @@ Powered by **OpenClaw** and integrated with various external APIs (TMDB, OMDB, Y
 - **Accurate Ratings:** Pulls data from various sources like IMDb, TMDB, and Metacritic via OMDB to help you pick the best content.
 - **Trailers:** Automatically fetches relevant YouTube trailers.
 - **Where to Watch:** Tells you exactly where you can stream, rent, or buy the title in your region (powered by JustWatch via TMDB).
+  - _Note on Rent/Buy:_ The bot acts as a filter across your existing subscriptions. Activating the Rent/Buy option will show paid content _only_ for the platforms you have already selected (e.g., Amazon Prime Video, Apple TV+), rather than querying purely transactional stores.
+  - _Single Source of Truth:_ The supported platforms are managed dynamically. Developers can easily add new providers to `src/utils/platforms.py`, and when rebuilding the Docker image (`docker compose up -d --build`), the build process will automatically trigger the `tools/sync_platforms.py` generator script to update the bot's capabilities and internal prompt tables.
 - **Personalized Suggestions:** Keeps track of your watched list and gives recommendations based on your preferences.
 
 ---
@@ -163,7 +165,9 @@ docker compose up -d --build
 ```
 
 > [!IMPORTANT]
-> **Sync Bot Commands:** After a rebuild, you should re-synchronize the bot commands with Telegram. Use the `/setcommands` command in [@BotFather](https://t.me/BotFather) and paste the list from [BOT_COMMANDS.md](./BOT_COMMANDS.md).
+> **Skill Reloading:** To ensure OpenClaw uses the latest version of your `SKILL.md` instructions **after** rebuilding the container, you MUST explicitly tell the bot in your chat (e.g., Telegram) to _"reload your skill"_ or _"read your skill again"_. This forces the agent to refresh its internal configuration for the active session.
+>
+> **Sync Bot Commands:** After a rebuild, you should also re-synchronize the bot commands with Telegram. Use the `/setcommands` command in [@BotFather](https://t.me/BotFather) and paste the list from [BOT_COMMANDS.md](./BOT_COMMANDS.md).
 
 ---
 
