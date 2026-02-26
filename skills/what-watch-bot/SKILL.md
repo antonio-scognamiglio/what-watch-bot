@@ -22,6 +22,7 @@ description: Personal bot that suggests the best movies and TV shows available o
 | `/language`       | Change your language preference (e.g., it-IT, fr-FR) |
 | `/region`         | Change your streaming region (e.g., IT, FR, US)      |
 | `/score`          | Change minimum rating score (default: 70)            |
+| `/rentbuy`        | Toggle Rent and Buy search results on/off            |
 | `/menu`           | Show the full command list                           |
 
 When you receive one of these commands, execute the corresponding flow described in the sections below.
@@ -58,6 +59,7 @@ I find the best movies and TV series available on your streaming platforms, filt
 📡 Region: `[region from DB, default: US]`
 ⭐ Min. score: `[rt_min_score from DB, default: 70]`%
 👀 Include Watched: `[include_watched from DB, default: False]`
+💰 Rent & Buy: `[rent_buy from DB, default: False]`
 🎭 Genres: [genre names in user's language, or "Not set"]
 📺 Platforms: [platform names, or "Not set"]
 
@@ -144,6 +146,8 @@ For language changes (`/language` or natural language): run `python3 {baseDir}/s
 For region changes (`/region`): run `python3 {baseDir}/scripts/setup_prefs.py --set-region <code>`.
 
 For score changes (`/score`): run `python3 {baseDir}/scripts/setup_prefs.py --set-min-score <number>`.
+
+For rent/buy toggle (`/rentbuy`): run `python3 {baseDir}/scripts/setup_prefs.py --set-rent-buy <true|false>`.
 
 For broad changes ("change my genres", "reconfigure platforms"): show the checkbox list highlighting currently active options with ✅.
 
@@ -239,37 +243,43 @@ Show platforms with ✅ for active, ◻️ for inactive:
 
 ```
 📺 These are your platforms. Tell me what to add or remove!
-
+<!-- PLATFORMS_UI_START -->
+💳 SUBSCRIPTION:
 ✅ Netflix
 ◻️ Amazon Prime Video
 ◻️ Disney+
 ◻️ Apple TV+
-◻️ NOW TV / Sky
+◻️ NOW TV
 ◻️ Paramount+
 ◻️ YouTube Premium
 ◻️ MUBI
+◻️ TIMvision
+◻️ Sky Go
+◻️ Infinity+
 
-🆓 FREE (ad-supported or free — no subscription required):
+🆓 FREE (ad-supported or free):
 ◻️ RaiPlay
 ◻️ Mediaset Infinity
-◻️ YouTube (free)
+◻️ YouTube
 ◻️ Rakuten TV
 ◻️ Pluto TV
 ◻️ Plex
+<!-- PLATFORMS_UI_END -->
 ```
 
 Save silently with `python3 {baseDir}/scripts/setup_prefs.py --set-platforms "<id1,id2,...>"`.
 
 **🔴 INTERNAL LOOKUP — NEVER SHOW TO USER:**
 
+<!-- PLATFORMS_LOOKUP_START -->
 💳 SUBSCRIPTION:
 | Platform | ID |
-| ------------------ | --- |
+| --- | --- |
 | Netflix | 8 |
 | Amazon Prime Video | 119 |
 | Disney+ | 337 |
 | Apple TV+ | 350 |
-| NOW TV / Sky | 39 |
+| NOW TV | 39 |
 | Paramount+ | 531 |
 | YouTube Premium | 188 |
 | MUBI | 11 |
@@ -279,15 +289,33 @@ Save silently with `python3 {baseDir}/scripts/setup_prefs.py --set-platforms "<i
 
 🆓 FREE (tier `free` or `ads` on TMDB):
 | Platform | ID |
-| --------------------- | --- |
+| --- | --- |
 | RaiPlay | 613 |
 | Mediaset Infinity | 359 |
-| YouTube (free) | 192 |
+| YouTube | 192 |
 | Rakuten TV | 35 |
 | Pluto TV | 300 |
 | Plex | 538 |
+<!-- PLATFORMS_LOOKUP_END -->
 
-### STEP 5 — Show or Hide Already-Watched Titles
+### STEP 5 — Rent & Buy Content
+
+> ⚠️ Read current preferences. `rent_buy` controls whether suggestions include titles that require additional payment to rent or buy on the selected platforms.
+
+Show:
+
+```
+💰 Do you also want to see titles available for Rent or Purchase **only on the platforms you just selected** (e.g. Amazon Video Store, Apple TV Rentals), or do you want to see only content included in your base subscriptions?
+
+Current: [Rent/Buy: 🟢 Included] / [⚪ Excluded, show only free/subscriptions]
+(Internal value: `rent_buy` = `[current]`)
+
+Reply "include rent/buy" or "only free/subscriptions" to change.
+```
+
+Save silently with `python3 {baseDir}/scripts/setup_prefs.py --set-rent-buy false` (or `true`).
+
+### STEP 6 — Show or Hide Already-Watched Titles
 
 > ⚠️ Read current preferences. `include_watched` controls whether suggestions include already-watched titles.
 
@@ -304,7 +332,7 @@ Reply "hide them" or "show watched too" to change.
 
 Save with `python3 {baseDir}/scripts/setup_prefs.py --set-include-watched false` (or `true`).
 
-### STEP 6 — Minimum Release Year
+### STEP 7 — Minimum Release Year
 
 ```
 📅 Do you want a minimum release year for suggestions (e.g., from 2010 onwards), or do you prefer no restriction?
@@ -316,7 +344,7 @@ Reply with a year (e.g., "from 2015", "since 1990") or "no limit".
 
 Save with `python3 {baseDir}/scripts/setup_prefs.py --set-min-year 2010` or `--set-min-year none`.
 
-### STEP 7 — Number of Results
+### STEP 8 — Number of Results
 
 ```
 🔢 How many suggestions do you want per search? (Choose a number from 1 to 20)
@@ -328,7 +356,7 @@ Reply with a number or "keep it" to leave unchanged.
 
 Save with `python3 {baseDir}/scripts/setup_prefs.py --set-max-results 10`.
 
-### STEP 8 — Minimum Rating Score
+### STEP 9 — Minimum Rating Score
 
 ```
 ⭐ What minimum rating score should titles have? (0-100, default: 70)
@@ -340,7 +368,7 @@ Reply with a number or "keep it" to leave unchanged.
 
 Save with `python3 {baseDir}/scripts/setup_prefs.py --set-min-score 70`.
 
-### STEP 9 — Final Confirmation
+### STEP 10 — Final Confirmation
 
 > "✅ All your preferences have been saved! Want me to find something to watch right now? Try: 👉 /suggest_movies or 👉 /suggest_series"
 
@@ -388,9 +416,12 @@ Strict format for a single card:
 - tier `subscription`: 💳 [PlatformName](url)
 - tier `free`: 🆓 [PlatformName](url)
 - tier `ads`: 📢 [PlatformName](url)
+- tier `rent`: 💰 [PlatformName](url)
+- tier `buy`: 💵 [PlatformName](url)
 - If url is null: show emoji + name only, no link
 - One line per platform]
-  ▶️ [Translated phrase for "Watch the trailer on YouTube"](trailer_url)
+
+▶️ [Translated phrase for "Watch the trailer on YouTube"](trailer_url)
 
 [IF `is_watched` IS TRUE:]
 🟢 You've already seen this 👉 /remove_[id] to mark as unwatched
