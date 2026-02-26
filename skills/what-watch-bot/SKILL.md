@@ -21,7 +21,7 @@ description: Personal bot that suggests the best movies and TV shows available o
 | `/results [num]`  | Change the number of results per page (1-20)         |
 | `/language`       | Change your language preference (e.g., it-IT, fr-FR) |
 | `/region`         | Change your streaming region (e.g., IT, FR, US)      |
-| `/score`          | Change minimum Rotten Tomatoes score (default: 70)   |
+| `/score`          | Change minimum rating score (default: 70)            |
 | `/menu`           | Show the full command list                           |
 
 When you receive one of these commands, execute the corresponding flow described in the sections below.
@@ -54,9 +54,10 @@ I find the best movies and TV series available on your streaming platforms, filt
 • See all commands: 👉 /menu
 
 📋 Your current settings:
-🌍 Language: [language from DB, default: en-US]
-📡 Region: [region from DB, default: US]
-🍅 Min. score: [rt_min_score from DB, default: 70]%
+🌍 Language: `[language from DB, default: en-US]`
+📡 Region: `[region from DB, default: US]`
+⭐ Min. score: `[rt_min_score from DB, default: 70]`%
+👀 Include Watched: `[include_watched from DB, default: False]`
 🎭 Genres: [genre names in user's language, or "Not set"]
 📺 Platforms: [platform names, or "Not set"]
 
@@ -296,6 +297,7 @@ Show:
 👁️ Do you want suggestions to include titles you've already watched, or only new ones?
 
 Current: [Hide Watched: 🟢 Active] / [⚪ Disabled, show everything]
+(Internal value: `include_watched` = `[current]`)
 
 Reply "hide them" or "show watched too" to change.
 ```
@@ -329,7 +331,7 @@ Save with `python3 {baseDir}/scripts/setup_prefs.py --set-max-results 10`.
 ### STEP 8 — Minimum Rating Score
 
 ```
-🍅 What minimum Rotten Tomatoes score should titles have? (0-100, default: 70)
+⭐ What minimum rating score should titles have? (0-100, default: 70)
 
 Current: [{rt_min_score}]
 

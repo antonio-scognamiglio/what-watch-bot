@@ -12,7 +12,7 @@ Powered by **OpenClaw** and integrated with various external APIs (TMDB, OMDB, Y
 
 - **Natural Language Search:** Ask for movies or series freely in chat (e.g., "Find me a good sci-fi movie from the 80s", or "What should I watch tonight?").
 - **Rich Media Info:** Get plots, release dates, cast info, genres, and more.
-- **Accurate Ratings:** Pulls data from sources like Rotten Tomatoes via OMDB to help you pick the best content.
+- **Accurate Ratings:** Pulls data from various sources like IMDb, TMDB, and Metacritic via OMDB to help you pick the best content.
 - **Trailers:** Automatically fetches relevant YouTube trailers.
 - **Where to Watch:** Tells you exactly where you can stream, rent, or buy the title in your region (powered by JustWatch via TMDB).
 - **Personalized Suggestions:** Keeps track of your watched list and gives recommendations based on your preferences.
@@ -28,7 +28,7 @@ To run this project, you need Docker installed on your machine. The bot relies o
 Before starting the setup, you must obtain a few free API keys. The bot uses these to fetch information:
 
 - **TMDB API Key:** Required for searching titles, getting metadata, and finding streaming providers. [Get it here](https://developer.themoviedb.org/docs/getting-started).
-- **OMDB API Key:** Required for fetching Rotten Tomatoes ratings. [Get it here](http://www.omdbapi.com/apikey.aspx).
+- **OMDB API Key:** Required for fetching additional ratings like IMDb and Metacritic. [Get it here](http://www.omdbapi.com/apikey.aspx).
 - **YouTube API Key:** Required to find trailers. You need a Google Cloud account with the YouTube Data API v3 enabled. [Get it here](https://console.cloud.google.com/).
 
 ### 2. Configuration Setup
@@ -114,11 +114,14 @@ The OpenClaw setup wizard is generally fully guided. If you choose to use Telegr
    - **Hatch your bot:** You can select `Do this later`.
 
 > [!TIP]
-> **Wizard Timeouts & Manual Pairing:**
+> **Wizard Timeouts & Manual Pairing (Frequent in Docker):**
 >
-> - If the wizard crashes, times out, or you exit unexpectedly, simply run the `onboard` command again to restart the setup process.
-> - The wizard usually handles device pairing for you. However, if it fails or if the bot asks you for a pairing code on Telegram (e.g., `A1B2C3D4`), you must approve the device manually using the pairing command.
->   - Example: `docker exec -it what-watch-openclaw node dist/index.js pairing approve telegram <YOUR_CODE>`
+> - Whether you are installing the bot for the first time or recreating the container from scratch (`docker compose down -v`), the wizard might exit halfway after you paste the token. This is normal! Simply run the `onboard` command again to resume.
+> - **Device Pairing Code:** After the wizard, send a message to your bot on your chosen platform (Telegram, WhatsApp, etc.). The bot will likely reply with an `"OpenClaw: access not configured"` error and provide you with a **Pairing code** (e.g., `A1B2C3D4`).
+> - You **must** approve this device manually using the pairing command:
+>   - 👉 `docker exec -it what-watch-openclaw node dist/index.js pairing approve <channel_name> <YOUR_CODE>`
+>   - _(e.g. replace `<channel_name>` with `telegram`, `whatsapp`, `discord`)_
+>   - Once approved, the bot will start replying.
 >   - For more details, refer to the [official OpenClaw Pairing Docs](https://docs.openclaw.ai/channels/pairing).
 
 > [!CAUTION]

@@ -16,7 +16,7 @@ watched - 👀 Show everything you've marked as watched
 results - 🔢 Set the number of results per page (1-20)
 language - 🌍 Change your language (e.g., en-US, it-IT, fr-FR)
 region - 📡 Change your streaming region (e.g., US, IT, FR)
-score - 🍅 Set the minimum Rotten Tomatoes score (default: 70)
+score - ⭐ Set the minimum rating score (default: 70)
 menu - 📋 Show the full command list
 ```
 

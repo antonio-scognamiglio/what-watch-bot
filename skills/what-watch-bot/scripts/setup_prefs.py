@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--set-max-results", type=str, help="Set max items per search page (integer between 1 and 20)")
     parser.add_argument("--set-language", type=str, help="Set language preference (e.g., en-US, it-IT, fr-FR)")
     parser.add_argument("--set-region", type=str, help="Set streaming region (e.g., US, IT, FR)")
-    parser.add_argument("--set-min-score", type=str, help="Set minimum Rotten Tomatoes score (0-100)")
+    parser.add_argument("--set-min-score", type=str, help="Set minimum rating score (0-100)")
     parser.add_argument("--view", action="store_true", help="View current preferences")
     args = parser.parse_args()
 
@@ -127,6 +127,7 @@ def main():
         prefs.setdefault('language', 'en-US')
         prefs.setdefault('region', 'US')
         prefs.setdefault('rt_min_score', 70)
+        prefs.setdefault('include_watched', False)
         print(json.dumps(prefs, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
