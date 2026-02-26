@@ -87,7 +87,10 @@ def _fetch_and_filter(media_type_pref, genres, platforms, min_year, language, re
             imdb = omdb_ratings.get('imdb') or 0
             meta = omdb_ratings.get('metacritic') or 0
 
-            if tmdb_rating >= 7.0 or toma >= rt_min_score or imdb >= 7.0 or meta >= rt_min_score:
+            # Convert the 0-100 rating scale to a 0.0-10.0 scale for TMDB and IMDb
+            min_score_base_10 = rt_min_score / 10.0
+
+            if tmdb_rating >= min_score_base_10 or toma >= rt_min_score or imdb >= min_score_base_10 or meta >= rt_min_score:
                 item['omdb_ratings'] = omdb_ratings
                 item['tmdb_rating'] = tmdb_rating
                 item['is_watched'] = is_watched
