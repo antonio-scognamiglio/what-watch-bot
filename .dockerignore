@@ -14,15 +14,16 @@ package-lock.json
 # Tests and Coverage
 skills/what-watch-bot/tests/
 skills/what-watch-bot/.pytest_cache/
+skills/what-watch-bot/.coverage
+skills/what-watch-bot/__pycache__/
 tests/
-.coverage
-.coverage.*
+**/.coverage
+**/.coverage.*
 htmlcov/
 coverage.xml
-.pytest_cache/
-__pycache__/
-*.pyc
-skills/what-watch-bot/__pycache__/
+**/.pytest_cache/
+**/__pycache__/
+**/*.pyc
 
 # Virtual Environment
 venv/

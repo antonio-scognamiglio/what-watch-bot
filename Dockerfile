@@ -1,21 +1,41 @@
-# Extends the base OpenClaw image and adds the Python dependencies
-# required by the bot's scripts using pip for pinned version control.
+# ---------------------------------------------------------
+# STAGE 1: Compiler (Builds the Markdown from Python logic)
+# ---------------------------------------------------------
+FROM ghcr.io/openclaw/openclaw:latest AS builder
+USER root
+
+# Install python to run our sync script
+RUN apt-get update -qq && apt-get install -y --no-install-recommends python3
+
+WORKDIR /build
+COPY . /build/
+
+# Run the sync script to automatically prepare the SKILL.md file
+RUN python3 tools/sync_platforms.py
+
+# ---------------------------------------------------------
+# STAGE 2: Production Runtime (Clean Image)
+# ---------------------------------------------------------
 FROM ghcr.io/openclaw/openclaw:latest
 
 USER root
 
-# Install pip, then install pinned Python dependencies from requirements.txt
+# Install only the runtime dependencies (pip and Python packages)
 COPY requirements.txt /tmp/requirements.txt
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends python3-pip && \
     pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements.txt && \
     rm -rf /var/lib/apt/lists/* /tmp/requirements.txt
 
-# Copy the actual bot code into the image (Required for Production where there is no Bind Mount)
-# We do this as root, then change ownership to node
-COPY . /home/node/.openclaw/workspace
-RUN chown -R node:node /home/node/.openclaw
+# Prep the state dir and bot app dir with correct permissions
+RUN mkdir -p /home/node/.openclaw /home/node/what-watch-bot && \
+    chown -R node:node /home/node/.openclaw /home/node/what-watch-bot
 
+# Copy the COMPILED code from the builder stage (contains the unified SKILL.md)
+# This excludes `tools/` and everything else we don't need at runtime!
+COPY --from=builder /build/skills/what-watch-bot/ /home/node/what-watch-bot/
+
+RUN chown -R node:node /home/node/what-watch-bot
 
 # Switch back to the default non-root user
 USER node
