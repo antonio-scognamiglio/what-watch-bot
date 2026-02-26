@@ -1,9 +1,9 @@
 ---
 trigger: always_on
+description: Ensures the agent never commits or pushes code outside of the official /commit workflow.
 ---
 
 # Git Workflow & Commit Rules
 
-- **Validation Before Commit**: For any changes affecting logic (`src/`, `tests/`, `scripts/`), you MUST ALWAYS run the `/commit` workflow to ensure all tests pass and changes are formatted correctly BEFORE proposing a commit.
-- **Skip Conditions**: You MAY skip running `/test` ONLY IF the changes are strictly non-functional (e.g., `.md` documentation, `.gitignore`, `.env.example`).
-- **Explicit User Approval**: The `/commit` workflow handles user approval. Never attempt to run `git commit` outside of this workflow.
+- **Workflow Mandate**: You MUST NEVER run `git commit` or `git push` autonomously. Any request to commit code, save changes, or push to the remote repository MUST be routed exclusively through the `/commit` workflow.
+- **Full Delegation**: Do not attempt to bypass or pre-empt steps. The `/commit` workflow handles test validation, synchronization, conflict resolution, grouping, and pushing. Follow its instructions exactly.
