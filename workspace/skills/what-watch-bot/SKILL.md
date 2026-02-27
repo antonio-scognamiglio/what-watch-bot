@@ -272,6 +272,7 @@ Save silently with `python3 {baseDir}/scripts/setup_prefs.py --set-platforms "<i
 **🔴 INTERNAL LOOKUP — NEVER SHOW TO USER:**
 
 <!-- PLATFORMS_LOOKUP_START -->
+
 💳 SUBSCRIPTION:
 | Platform | ID |
 | --- | --- |
@@ -296,6 +297,7 @@ Save silently with `python3 {baseDir}/scripts/setup_prefs.py --set-platforms "<i
 | Rakuten TV | 35 |
 | Pluto TV | 300 |
 | Plex | 538 |
+
 <!-- PLATFORMS_LOOKUP_END -->
 
 ### STEP 5 — Rent & Buy Content
@@ -398,7 +400,7 @@ Strict format for a single card:
 
 📖 **[Label for Plot]:**
 [If the plot in the JSON is very long, summarise it concisely (max 4-5 lines), without cutting it mid-sentence.
-⚠️ **MISSING PLOT:** If `overview` in the JSON is empty or missing, BEFORE responding run: `python3 {baseDir}/scripts/fetch_plot.py "Title Name"`. This script searches OMDb and Wikipedia for a plot. Check the `"source"` field in the output: if it ends in `_en` (e.g., `"omdb_en"` or `"wikipedia_en"`) AND the user's language is NOT English, translate the plot to the user's language before inserting it here. If the script also fails, write "Plot not available."]
+⚠️ **MISSING PLOT:** If `overview` in the JSON is empty or missing, BEFORE responding run: `python3 {baseDir}/scripts/fetch_plot.py "Title Name" "Year" "movie_or_tv"` — replace `"Title Name"` with the title, `"Year"` with the release year (e.g. `"2023"`), and `"movie_or_tv"` with `"movie"` or `"tv"`. This script searches OMDb and Wikipedia for a plot. Check the `"source"` field in the output: if it ends in `_en` (e.g., `"omdb_en"` or `"wikipedia_en"`) AND the user's language is NOT English, translate the plot to the user's language before inserting it here. If the script also fails, write "Plot not available."]
 
 🎬 **[Label for Director(s)]:** [List of directors]
 
