@@ -48,7 +48,9 @@ def build_media_card(item, omdb_ratings=None, tmdb_rating=None, user_genre_ids=N
 
     or_ratings = omdb_ratings or item.get('omdb_ratings', {})
     vote_avg = item.get('vote_average') or 0
-    tmdb_val = tmdb_rating or item.get('tmdb_rating') or (round(vote_avg, 1) if vote_avg > 0 else None)
+    vote_count = item.get('vote_count') or 0
+    # If there are votes, show the rating (even if 0). If 0 votes, it's 'unrated' (None).
+    tmdb_val = tmdb_rating or item.get('tmdb_rating') or (round(vote_avg, 1) if vote_count > 0 else None)
 
     return {
         'id': item_id,

@@ -13,6 +13,7 @@ def base_tmdb_item():
         'genre_ids': [28, 12], # Action, Adventure
         'poster_path': '/basic.jpg',
         'vote_average': 8.5,
+        'vote_count': 100,
         'is_watched': True
     }
 
@@ -58,7 +59,10 @@ def test_build_media_card_series(mocker):
         'media_type': 'tv',
         'name': 'Test Series', # TV shows use 'name' instead of 'title'
         'first_air_date': '2021-09-01',
-        'vote_average': 7.1
+        'overview': 'Series overview',
+        'genre_ids': [18],
+        'vote_average': 7.1,
+        'vote_count': 50
     }
     
     mocker.patch('src.utils.formatters.get_youtube_trailer', return_value=None)
@@ -75,6 +79,7 @@ def test_build_media_card_series(mocker):
     assert card['title'] == 'Test Series'
     assert card['year'] == '2021'
     assert card['directors'] == ['Showrunner 1']
+    assert card['ratings']['tmdb'] == 7.1
     assert card['trailer_url'] is None
 
 def test_build_media_card_injected_ratings(base_tmdb_item, mock_dependencies):
@@ -115,7 +120,8 @@ def test_build_media_card_english_overview_fallback(mocker):
         'release_date': '2023-01-01',
         'overview': '',  # empty — simulates obscure film with no Italian translation
         'genre_ids': [],
-        'vote_average': 6.6
+        'vote_average': 6.6,
+        'vote_count': 10
     }
     mocker.patch('src.utils.formatters.get_youtube_trailer', return_value=None)
     mocker.patch('src.utils.formatters.get_watch_providers', return_value=[])
@@ -132,8 +138,8 @@ def test_build_media_card_english_overview_fallback(mocker):
     assert mock_details.call_count == 2
 
 
-def test_build_media_card_zero_rating_is_none(mocker):
-    """vote_average=0 should produce tmdb rating=None so the agent omits it."""
+def test_build_media_card_unrated_is_none(mocker):
+    """vote_count=0 should produce tmdb rating=None so the agent omits it."""
     item = {
         'id': 777,
         'media_type': 'movie',
@@ -142,11 +148,30 @@ def test_build_media_card_zero_rating_is_none(mocker):
         'overview': 'A film with no ratings yet.',
         'genre_ids': [],
         'vote_average': 0,
+        'vote_count': 0
     }
     mocker.patch('src.utils.formatters.get_youtube_trailer', return_value=None)
     mocker.patch('src.utils.formatters.get_watch_providers', return_value=[])
     mocker.patch('src.utils.formatters.get_tmdb_details', return_value={})
 
     card = build_media_card(item)
-
     assert card['ratings']['tmdb'] is None
+
+def test_build_media_card_real_zero_rating(mocker):
+    """vote_count > 0 and average 0 should show 0.0 rating."""
+    item = {
+        'id': 888,
+        'media_type': 'movie',
+        'title': 'Bad Film',
+        'release_date': '2017-01-01',
+        'overview': 'A film everyone hated.',
+        'genre_ids': [],
+        'vote_average': 0,
+        'vote_count': 10
+    }
+    mocker.patch('src.utils.formatters.get_youtube_trailer', return_value=None)
+    mocker.patch('src.utils.formatters.get_watch_providers', return_value=[])
+    mocker.patch('src.utils.formatters.get_tmdb_details', return_value={})
+
+    card = build_media_card(item)
+    assert card['ratings']['tmdb'] == 0.0
