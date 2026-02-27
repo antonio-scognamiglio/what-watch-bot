@@ -105,3 +105,28 @@ def test_build_media_card_no_details_fallback(base_tmdb_item, mocker):
     assert card['poster_url'] == "https://image.tmdb.org/t/p/w500/basic.jpg"
     assert card['cast'] == []
     assert card['directors'] == []
+
+def test_build_media_card_english_overview_fallback(mocker):
+    """Test that an empty localized overview triggers a second TMDB call in English."""
+    item_no_overview = {
+        'id': 999,
+        'media_type': 'movie',
+        'title': 'Unseen',
+        'release_date': '2023-01-01',
+        'overview': '',  # empty — simulates obscure film with no Italian translation
+        'genre_ids': [],
+        'vote_average': 6.6
+    }
+    mocker.patch('src.utils.formatters.get_youtube_trailer', return_value=None)
+    mocker.patch('src.utils.formatters.get_watch_providers', return_value=[])
+
+    mock_details = mocker.patch('src.utils.formatters.get_tmdb_details')
+    mock_details.side_effect = [
+        {'overview': '', 'credits': {'cast': [], 'crew': []}},        # it-IT: no translation
+        {'overview': 'English fallback overview', 'credits': {}},      # en-US: has plot
+    ]
+
+    card = build_media_card(item_no_overview, language='it-IT')
+
+    assert card['overview'] == 'English fallback overview'
+    assert mock_details.call_count == 2

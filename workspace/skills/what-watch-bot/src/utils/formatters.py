@@ -19,9 +19,14 @@ def build_media_card(item, omdb_ratings=None, tmdb_rating=None, user_genre_ids=N
     item_type = item.get('media_type', 'movie')
     item_id = item.get('id')
 
-    # Fetch detailed credits and overview
+    # Fetch detailed credits and overview in user's language
     details = get_tmdb_details(item_id, item_type, language) or {}
     overview = details.get('overview') or item.get('overview') or ""
+
+    # If overview is missing (film not translated), fall back to English TMDB
+    if not overview and language != 'en-US':
+        details_en = get_tmdb_details(item_id, item_type, 'en-US') or {}
+        overview = details_en.get('overview') or ""
 
     credits_data = details.get('credits', {})
     cast = [c['name'] for c in credits_data.get('cast', [])[:3]]
