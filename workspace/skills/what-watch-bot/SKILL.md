@@ -407,11 +407,12 @@ Strict format for a single card:
 🎭 **[Label for Main Cast]:** [List of cast members]
 
 📊 **[Label for Ratings]:**
-(Only show ratings that are actually present. Round decimal values to 1 decimal place. If a rating is missing, omit it.)
+[From the JSON `ratings`, list the available ones. If a rating is null/missing, omit its line.
 🍅 Tomatometer: [X]%
 Ⓜ️ Metacritic: [X]/100
 ⭐ IMDb: [X]/10
 🔵 TMDB: [X]/10
+If ALL four ratings are missing/null, write: "Nessuna valutazione disponibile"]
 
 📺 **[Label for Available on]:**
 [The JSON `platforms` is a list of objects `{name, url, tier}`. For each platform, format based on tier:

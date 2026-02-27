@@ -130,3 +130,23 @@ def test_build_media_card_english_overview_fallback(mocker):
 
     assert card['overview'] == 'English fallback overview'
     assert mock_details.call_count == 2
+
+
+def test_build_media_card_zero_rating_is_none(mocker):
+    """vote_average=0 should produce tmdb rating=None so the agent omits it."""
+    item = {
+        'id': 777,
+        'media_type': 'movie',
+        'title': 'Unrated Film',
+        'release_date': '2017-01-01',
+        'overview': 'A film with no ratings yet.',
+        'genre_ids': [],
+        'vote_average': 0,
+    }
+    mocker.patch('src.utils.formatters.get_youtube_trailer', return_value=None)
+    mocker.patch('src.utils.formatters.get_watch_providers', return_value=[])
+    mocker.patch('src.utils.formatters.get_tmdb_details', return_value={})
+
+    card = build_media_card(item)
+
+    assert card['ratings']['tmdb'] is None

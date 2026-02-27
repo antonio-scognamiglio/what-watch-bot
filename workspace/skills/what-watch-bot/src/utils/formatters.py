@@ -47,7 +47,8 @@ def build_media_card(item, omdb_ratings=None, tmdb_rating=None, user_genre_ids=N
     platform_objects = get_watch_providers(item_id, item_type, title, region, rent_buy, show_all=show_all)
 
     or_ratings = omdb_ratings or item.get('omdb_ratings', {})
-    tr_rating = tmdb_rating or item.get('tmdb_rating', round(item.get('vote_average') or 0, 1))
+    vote_avg = item.get('vote_average') or 0
+    tmdb_val = tmdb_rating or item.get('tmdb_rating') or (round(vote_avg, 1) if vote_avg > 0 else None)
 
     return {
         'id': item_id,
@@ -63,7 +64,7 @@ def build_media_card(item, omdb_ratings=None, tmdb_rating=None, user_genre_ids=N
             'tomatometer': or_ratings.get('tomatometer'),
             'imdb': or_ratings.get('imdb'),
             'metacritic': or_ratings.get('metacritic'),
-            'tmdb': tr_rating
+            'tmdb': tmdb_val
         },
         'platforms': platform_objects,
         'trailer_url': trailer,
