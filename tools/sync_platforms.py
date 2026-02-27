@@ -3,12 +3,12 @@ import os
 import re
 import sys
 
-# Add the project's root to the Python path so it can find skills/what-watch-bot/src
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'skills', 'what-watch-bot')))
+# Add the project's root to the Python path so it can find workspace/skills/what-watch-bot/src
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'workspace', 'skills', 'what-watch-bot')))
 
 from src.utils.platforms import SUPPORTED_PLATFORMS
 
-SKILL_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'skills', 'what-watch-bot', 'SKILL.md')
+SKILL_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'workspace', 'skills', 'what-watch-bot', 'SKILL.md')
 
 def generate_ui_markdown(platforms):
     subs = [p for p in platforms if p['tier'] == 'SUBSCRIPTION']

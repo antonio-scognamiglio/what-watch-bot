@@ -4,7 +4,7 @@
 
 WhatWatchBot is a powerful Telegram bot designed to help you discover, explore, and find where to stream your next favorite movie or TV series.
 
-> **Architectural Note:** This repository is structured as an **OpenClaw Workspace**. It contains the core configuration for an OpenClaw Agent (`SOUL.md`, `IDENTITY.md`) and a self-contained Python **Skill** located in `skills/what-watch-bot/` which provides the actual movie and TV series recommendation capabilities.
+> **Architectural Note:** This repository is structured as an **OpenClaw Workspace**. The `workspace/` folder maps 1:1 to `~/.openclaw/workspace` inside the container — it contains the agent's identity (`SOUL.md`, `IDENTITY.md`) and the Python **Skill** located in `workspace/skills/what-watch-bot/` which provides the actual movie and TV series recommendation capabilities.
 
 Powered by **OpenClaw** and integrated with various external APIs (TMDB, OMDB, YouTube, Wikipedia), WhatWatchBot understands natural language queries, fetches detailed media information (including ratings and trailers), and guides you directly to the streaming platforms available in your region.
 
@@ -136,13 +136,13 @@ The OpenClaw setup wizard is generally fully guided. If you choose to use Telegr
 
 ## 📁 Project Structure
 
-This repository uses the official **OpenClaw Workspace Paradigm**. The root directory configures the Agent, while the Python code is contained within a specific Skill folder.
+This repository uses the official **OpenClaw Workspace Paradigm**. The `workspace/` folder is the OpenClaw workspace and is copied directly into the container. Dev files (`Dockerfile`, `docker-compose*.yml`, `tools/`, etc.) remain at the root.
 
-- **`IDENTITY.md`** & **`SOUL.md`**: Define the agent's core character, base instructions, tone, and language mapping.
-- **`skills/what-watch-bot/`**: The standalone technical skill providing the bot's abilities.
+- **`workspace/IDENTITY.md`** & **`workspace/SOUL.md`**: Define the agent's core character, base instructions, tone, and language mapping.
+- **`workspace/skills/what-watch-bot/`**: The standalone technical skill providing the bot's abilities.
   - `src/`: Core logic and API integrations (`tmdb.py`, `omdb.py`, `database.py`, etc.).
   - `scripts/`: CLI entrypoints used by OpenClaw to trigger the bot's abilities.
-  - `tests/`: Unit tests isolating and verifying the Python logic independent of the Agent.
+  - `tests/`: Unit tests (dev only, excluded from Docker image).
   - `SKILL.md`: The technical manual mapping slash commands to Python scripts.
 - **`docker-compose.yml`**: Docker configuration defining the Gateway architecture.
 - **`db/`**: Local binding for the SQLite database tracking user preferences.
@@ -155,7 +155,7 @@ Since this project follows a strict container isolation pattern (no Workspace bi
 
 - **`SOUL.md`**: Core instructions and persona.
 - **`IDENTITY.md`**: Bot branding and identity.
-- **`skills/what-watch-bot/SKILL.md`**: Slash command mapping and technical manual.
+- **`workspace/skills/what-watch-bot/SKILL.md`**: Slash command mapping and technical manual.
 
 To apply changes made to these files, you must rebuild the Docker image:
 
@@ -182,6 +182,6 @@ To run the test suite and check code coverage:
 pip install -r requirements.txt
 
 # 2. Run the full test suite
-cd skills/what-watch-bot
+cd workspace/skills/what-watch-bot
 PYTHONPATH=. pytest tests/ -v --cov=src --cov-report=term-missing
 ```

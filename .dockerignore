@@ -12,10 +12,10 @@ node_modules/
 package-lock.json
 
 # Tests and Coverage
-skills/what-watch-bot/tests/
-skills/what-watch-bot/.pytest_cache/
-skills/what-watch-bot/.coverage
-skills/what-watch-bot/__pycache__/
+workspace/skills/what-watch-bot/tests/
+workspace/skills/what-watch-bot/.pytest_cache/
+workspace/skills/what-watch-bot/.coverage
+workspace/skills/what-watch-bot/__pycache__/
 tests/
 **/.coverage
 **/.coverage.*

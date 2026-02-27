@@ -31,9 +31,9 @@ RUN apt-get update -qq && \
 RUN mkdir -p /home/node/.openclaw /home/node/what-watch-bot && \
     chown -R node:node /home/node/.openclaw /home/node/what-watch-bot
 
-# Copy the COMPILED code from the builder stage (contains the unified SKILL.md)
-# This excludes `tools/` and everything else we don't need at runtime!
-COPY --from=builder /build/skills/what-watch-bot/ /home/node/what-watch-bot/
+# Copy the COMPILED workspace from the builder stage (workspace/ maps 1:1 to ~/.openclaw/workspace)
+# This excludes tests/ and dev artifacts via .dockerignore
+COPY --from=builder /build/workspace/ /home/node/what-watch-bot/
 
 RUN chown -R node:node /home/node/what-watch-bot
 
