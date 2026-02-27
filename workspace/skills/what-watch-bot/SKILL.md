@@ -412,7 +412,7 @@ Strict format for a single card:
 Ⓜ️ Metacritic: [X]/100
 ⭐ IMDb: [X]/10
 🔵 TMDB: [X]/10
-If ALL four ratings are missing/null, write: "Nessuna valutazione disponibile"]
+If ALL four ratings are missing/null, write: "No ratings available"]
 
 📺 **[Label for Available on]:**
 [The JSON `platforms` is a list of objects `{name, url, tier}`. For each platform, format based on tier:
@@ -423,7 +423,7 @@ If ALL four ratings are missing/null, write: "Nessuna valutazione disponibile"]
 - tier `buy`: 💵 [PlatformName](url)
 - If `url` is null: show tier emoji + name only, no link (e.g. 💳 FilmBox+)
 - One line per platform
-- If the `platforms` list is empty, write: "Non disponibile nella tua regione ([region from user prefs])"]
+- If the `platforms` list is empty, write: "Not available in your region ([region from user prefs])"]
 
 ▶️ [Translated phrase for "Watch the trailer on YouTube"](trailer_url)
 
