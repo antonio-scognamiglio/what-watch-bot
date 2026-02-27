@@ -39,7 +39,7 @@ def main():
         if 'media_type' not in item:
             item['media_type'] = args.type if args.type != 'both' else 'movie'
 
-        card = build_media_card(item, language=language, region=region)
+        card = build_media_card(item, language=language, region=region, show_all=True)
         final_output.append(card)
 
     print(json.dumps(final_output, indent=2, ensure_ascii=False))

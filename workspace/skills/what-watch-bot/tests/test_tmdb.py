@@ -161,3 +161,58 @@ def test_get_watch_providers_failure(mocker, mock_tmdb_config):
     mock_get.return_value.status_code = 404
     
     assert get_watch_providers(999, 'movie', 'Test') == []
+
+
+def test_get_watch_providers_show_all_includes_unknown(mocker, mock_tmdb_config):
+    """show_all=True: unknown providers included with url=None."""
+    mock_get = mocker.patch('src.api.tmdb.requests.get')
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {
+        'results': {
+            'IT': {
+                'flatrate': [
+                    {'provider_name': 'Netflix'},    # known → url
+                    {'provider_name': 'FilmBox+'},   # unknown → url=None
+                ],
+                'free': [
+                    {'provider_name': 'RaiPlay'},    # known → url
+                ]
+            }
+        }
+    }
+
+    providers = get_watch_providers(123, 'movie', 'Test', region='IT', show_all=True)
+    names = [p['name'] for p in providers]
+
+    assert 'Netflix' in names
+    assert 'RaiPlay' in names
+    assert 'FilmBox+' in names
+
+    filmbox = next(p for p in providers if p['name'] == 'FilmBox+')
+    assert filmbox['url'] is None
+    assert filmbox['tier'] == 'subscription'
+
+    netflix = next(p for p in providers if p['name'] == 'Netflix')
+    assert netflix['url'] is not None
+
+
+def test_get_watch_providers_show_all_false_excludes_unknown(mocker, mock_tmdb_config):
+    """show_all=False (default): unknown providers are excluded."""
+    mock_get = mocker.patch('src.api.tmdb.requests.get')
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {
+        'results': {
+            'IT': {
+                'flatrate': [
+                    {'provider_name': 'Netflix'},
+                    {'provider_name': 'FilmBox+'},  # unknown → excluded
+                ]
+            }
+        }
+    }
+
+    providers = get_watch_providers(123, 'movie', 'Test', region='IT', show_all=False)
+    names = [p['name'] for p in providers]
+
+    assert 'Netflix' in names
+    assert 'FilmBox+' not in names

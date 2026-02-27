@@ -414,14 +414,15 @@ Strict format for a single card:
 🔵 TMDB: [X]/10
 
 📺 **[Label for Available on]:**
-[The JSON `platforms` is a list of objects `{name, url, tier}`. For each platform, format as:
+[The JSON `platforms` is a list of objects `{name, url, tier}`. For each platform, format based on tier:
 - tier `subscription`: 💳 [PlatformName](url)
 - tier `free`: 🆓 [PlatformName](url)
 - tier `ads`: 📢 [PlatformName](url)
 - tier `rent`: 💰 [PlatformName](url)
 - tier `buy`: 💵 [PlatformName](url)
-- If url is null: show emoji + name only, no link
-- One line per platform]
+- If `url` is null: show tier emoji + name only, no link (e.g. 💳 FilmBox+)
+- One line per platform
+- If the `platforms` list is empty, write: "Non disponibile nella tua regione ([region from user prefs])"]
 
 ▶️ [Translated phrase for "Watch the trailer on YouTube"](trailer_url)
 

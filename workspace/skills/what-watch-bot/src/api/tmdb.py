@@ -91,11 +91,14 @@ def search_tmdb_by_title(query, media_type='multi', language='en-US'):
         logger.error(f"Error searching TMDB by title '{query}': {e}")
     return []
 
-def get_watch_providers(item_id, media_type, title, region='US', rent_buy=False):
+def get_watch_providers(item_id, media_type, title, region='US', rent_buy=False, show_all=False):
     """
     Fetch streaming providers for a given region from TMDB.
-    Returns a unified list (no duplicates),
-    where tier is 'subscription' (flatrate), 'free', 'ads', and conditionally 'rent'/'buy'.
+    Returns a unified list (no duplicates).
+
+    show_all=False (default, used by suggest): only return providers in the supported registry.
+    show_all=True (used by find_title): return ALL providers in the region. Known providers
+    get a clickable URL; unknown providers are included with url=None (name only).
     """
     url = f"https://api.themoviedb.org/3/{media_type}/{item_id}/watch/providers"
     params = {'api_key': Config.TMDB_API_KEY}
@@ -108,41 +111,32 @@ def get_watch_providers(item_id, media_type, title, region='US', rent_buy=False)
             platforms = []
             seen = set()
 
-            # Subscription tier (flatrate)
-            for p in region_data.get('flatrate', []):
-                name = normalize_provider_name(p['provider_name'])
-                if name not in seen and name in _PLATFORM_URL_BUILDERS:
-                    seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'subscription'})
+            for tier_key, tier_name in [('flatrate', 'subscription'), ('free', 'free'), ('ads', 'ads')]:
+                for p in region_data.get(tier_key, []):
+                    normalized = normalize_provider_name(p['provider_name'])
+                    key = normalized or p['provider_name']
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    if normalized in _PLATFORM_URL_BUILDERS:
+                        platforms.append({'name': normalized, 'url': build_platform_url(p['provider_name'], title), 'tier': tier_name})
+                    elif show_all:
+                        platforms.append({'name': p['provider_name'], 'url': None, 'tier': tier_name})
 
-            # Free tier (no ads)
-            for p in region_data.get('free', []):
-                name = normalize_provider_name(p['provider_name'])
-                if name not in seen and name in _PLATFORM_URL_BUILDERS:
-                    seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'free'})
-
-            # Free with ads tier
-            for p in region_data.get('ads', []):
-                name = normalize_provider_name(p['provider_name'])
-                if name not in seen and name in _PLATFORM_URL_BUILDERS:
-                    seen.add(name)
-                    platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'ads'})
-
-            # Conditional Rent/Buy
             if rent_buy:
-                for p in region_data.get('rent', []):
-                    name = normalize_provider_name(p['provider_name'])
-                    if name not in seen and name in _PLATFORM_URL_BUILDERS:
-                        seen.add(name)
-                        platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'rent'})
-                for p in region_data.get('buy', []):
-                    name = normalize_provider_name(p['provider_name'])
-                    if name not in seen and name in _PLATFORM_URL_BUILDERS:
-                        seen.add(name)
-                        platforms.append({'name': name, 'url': build_platform_url(p['provider_name'], title), 'tier': 'buy'})
+                for tier_key, tier_name in [('rent', 'rent'), ('buy', 'buy')]:
+                    for p in region_data.get(tier_key, []):
+                        normalized = normalize_provider_name(p['provider_name'])
+                        key = normalized or p['provider_name']
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        if normalized in _PLATFORM_URL_BUILDERS:
+                            platforms.append({'name': normalized, 'url': build_platform_url(p['provider_name'], title), 'tier': tier_name})
+                        elif show_all:
+                            platforms.append({'name': p['provider_name'], 'url': None, 'tier': tier_name})
 
-            logger.info(f"Found {len(platforms)} providers for {title} in {region}")
+            logger.info(f"Found {len(platforms)} providers for {title} in {region} (show_all={show_all})")
             return platforms
         logger.warning(f"Watch provider lookup failed for {media_type} {item_id}: status {response.status_code}")
     except Exception as e:
