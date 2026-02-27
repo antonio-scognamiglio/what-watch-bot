@@ -6,7 +6,7 @@ WhatWatchBot is a powerful Telegram bot designed to help you discover, explore, 
 
 > **Architectural Note:** This repository is structured as an **OpenClaw Workspace**. The `workspace/` folder maps 1:1 to `~/.openclaw/workspace` inside the container — it contains the agent's identity (`SOUL.md`, `IDENTITY.md`) and the Python **Skill** located in `workspace/skills/what-watch-bot/` which provides the actual movie and TV series recommendation capabilities.
 
-Powered by **OpenClaw** and integrated with various external APIs (TMDB, OMDB, YouTube, Wikipedia), WhatWatchBot understands natural language queries, fetches detailed media information (including ratings and trailers), and guides you directly to the streaming platforms available in your region.
+Powered by **OpenClaw** and integrated with various external APIs (TMDB, OMDB, YouTube), WhatWatchBot understands natural language queries, fetches detailed media information (including ratings and trailers), and guides you directly to the streaming platforms available in your region.
 
 ## What it does
 
