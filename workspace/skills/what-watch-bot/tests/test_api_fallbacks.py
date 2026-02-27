@@ -104,7 +104,7 @@ def test_fetch_wikipedia_plot_success(mocker):
     
     mock_get.side_effect = [search_response, extract_response]
 
-    plot = fetch_wikipedia_plot("The Matrix (1999)", lang="en")
+    plot = fetch_wikipedia_plot("The Matrix", lang="en")
     
     assert "science fiction" in plot
     assert mock_get.call_count == 2
@@ -139,10 +139,55 @@ def test_fetch_wikipedia_plot_broad_fallback(mocker):
     
     mock_get.side_effect = [strict_response, broad_response, extract_response]
 
-    plot = fetch_wikipedia_plot("Some Exact Long Title That Fails", lang="it")
+    plot = fetch_wikipedia_plot("Matrix", lang="it")
     
     assert plot == "Matrix broad plot"
     assert mock_get.call_count == 3
+
+
+def test_fetch_wikipedia_plot_rejects_mismatched_title(mocker):
+    """Test that a top result whose title doesn't match the searched title is rejected."""
+    mock_get = mocker.patch('requests.get')
+
+    search_response = Mock()
+    search_response.status_code = 200
+    search_response.json.return_value = {
+        "query": {"search": [{"title": "Completely Unrelated Article"}]}
+    }
+
+    mock_get.return_value = search_response
+
+    # Without year/type, broad fallback also fails — both calls return wrong result
+    plot = fetch_wikipedia_plot("Inception 2", lang="it")
+
+    # No extract returned since mock only returns search, never extract
+    assert plot is None
+
+
+def test_fetch_wikipedia_plot_year_in_search_query(mocker):
+    """Test that year and media_type are included in the Wikipedia search query."""
+    mock_get = mocker.patch('requests.get')
+
+    search_response = Mock()
+    search_response.status_code = 200
+    search_response.json.return_value = {
+        "query": {"search": [{"title": "The Unseen (film 2016)"}]}
+    }
+
+    extract_response = Mock()
+    extract_response.status_code = 200
+    extract_response.json.return_value = {
+        "query": {"pages": {"1": {"extract": "A man slowly disappears..."}}}
+    }
+
+    mock_get.side_effect = [search_response, extract_response]
+
+    plot = fetch_wikipedia_plot("The Unseen", lang="en", year="2016", media_type="movie")
+
+    first_call_params = mock_get.call_args_list[0]
+    assert "2016" in str(first_call_params)
+    assert "film" in str(first_call_params)
+    assert "man slowly disappears" in plot
 
 
 def test_fetch_wikipedia_plot_not_found(mocker):

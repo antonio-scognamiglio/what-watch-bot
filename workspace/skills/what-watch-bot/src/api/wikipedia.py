@@ -4,25 +4,38 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-def fetch_wikipedia_plot(title, lang="en"):
+def fetch_wikipedia_plot(title, lang="en", year=None, media_type=None):
     """
     Search Wikipedia for the given title and return the extract (plot/overview).
     The 'lang' parameter is a Wikipedia language code (e.g., 'en', 'it', 'fr').
+    The optional 'year' and 'media_type' parameters improve disambiguation
+    (e.g., prevents finding a band when looking for a film).
+    media_type accepted values: 'movie' | 'tv' | None
     """
     search_url = f"https://{lang}.wikipedia.org/w/api.php"
     contact = Config.CONTACT_URL or "https://github.com/your-username"
     headers = {"User-Agent": f"WhatWatchBot/1.0 ({contact})"}
 
+    # Build search query: include year and media type to improve disambiguation.
+    # e.g. intitle:"The Unseen" 2016 film
+    search_query = f'intitle:"{title}"'
+    if year:
+        search_query += f' {year}'
+    if media_type == 'movie':
+        search_query += ' film'
+    elif media_type == 'tv':
+        search_query += ' serie televisiva'
+
     # Step 1: Search for the closest page title
     search_params = {
         "action": "query",
         "list": "search",
-        "srsearch": f'intitle:"{title}"',
+        "srsearch": search_query,
         "format": "json"
     }
 
     try:
-        logger.info(f"Searching Wikipedia [{lang}] for title: '{title}'")
+        logger.info(f"Searching Wikipedia [{lang}] for title: '{title}' (year={year}, type={media_type})")
         response = requests.get(search_url, params=search_params, headers=headers, timeout=5)
         response.raise_for_status()
         data = response.json()
@@ -30,8 +43,15 @@ def fetch_wikipedia_plot(title, lang="en"):
 
         if not search_results:
             logger.info(f"Strict Wikipedia search failed. Trying broad search for '{title}'")
-            # Try again less strictly
-            search_params["srsearch"] = title
+            # Try again less strictly, keep year/type hints if available
+            broad_parts = [title]
+            if year:
+                broad_parts.append(year)
+            if media_type == 'movie':
+                broad_parts.append('film')
+            elif media_type == 'tv':
+                broad_parts.append('serie televisiva')
+            search_params["srsearch"] = " ".join(broad_parts)
             response = requests.get(search_url, params=search_params, headers=headers, timeout=5)
             response.raise_for_status()
             data = response.json()

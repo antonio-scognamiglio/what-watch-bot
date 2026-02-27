@@ -16,6 +16,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     target_title = sys.argv[1]
+    # Optional year and media_type help Wikipedia disambiguate (e.g. 'film' vs band)
+    year = sys.argv[2] if len(sys.argv) >= 3 else None
+    media_type = sys.argv[3] if len(sys.argv) >= 4 else None  # 'movie' | 'tv'
 
     # Read user language preference to determine fallback chain
     conn = get_connection()
@@ -27,13 +30,13 @@ if __name__ == "__main__":
 
     # Step 1: Try Wikipedia in the user's configured language (skip if already English)
     if wiki_lang != 'en':
-        plot = fetch_wikipedia_plot(target_title, lang=wiki_lang)
+        plot = fetch_wikipedia_plot(target_title, lang=wiki_lang, year=year, media_type=media_type)
         if plot:
             print(json.dumps({"plot": plot, "source": f"wikipedia_{wiki_lang}"}, ensure_ascii=False, indent=2))
             sys.exit(0)
 
     # Step 2: Try English Wikipedia
-    plot_en = fetch_wikipedia_plot(target_title, lang="en")
+    plot_en = fetch_wikipedia_plot(target_title, lang="en", year=year, media_type=media_type)
     if plot_en:
         print(json.dumps({"plot": plot_en, "source": "wikipedia_en"}, ensure_ascii=False, indent=2))
         sys.exit(0)
